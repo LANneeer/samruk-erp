@@ -52,12 +52,6 @@ class AsyncAbstractUnitOfWork(AbstractAsyncContextManager["AsyncAbstractUnitOfWo
     def set_observability_hook(self, hook: ObservabilityHook) -> None:
         self._hook = hook
 
-    async def __aenter__(self) -> "AsyncAbstractUnitOfWork":
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb) -> None:
-        return await self._rollback()
-
     @abstractmethod
     async def _commit(self) -> None: ...
 
@@ -71,6 +65,12 @@ class AsyncAbstractUnitOfWork(AbstractAsyncContextManager["AsyncAbstractUnitOfWo
     async def rollback(self) -> None:
         await self._rollback()
         await self._hook.on_uow_rollback()
+
+    async def __aenter__(self) -> "AsyncAbstractUnitOfWork":
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        return await self.rollback()
 
     def collect_new_events(self) -> Generator[Event, None, None]:
         for repo in self.repositories:
