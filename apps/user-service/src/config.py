@@ -26,7 +26,7 @@ class Settings(BaseModel):
     PROM_ENABLED: bool = os.getenv("PROM_ENABLED", "1") == "1"
 
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    IDEMPOTENCY_TTL_SEC: int = int(os.getenv("IDEMPOTENCY_TTL_SEC", "600"))
+    IDEMPOTENCY_TTL_SEC: int = int(os.getenv("IDEMPOTENCY_TTL_SEC", "5"))
 
     TELEGRAM_BOT_TOKEN: str | None = os.getenv("TELEGRAM_BOT_TOKEN")
     TELEGRAM_CHAT_ID: str | None = os.getenv("TELEGRAM_CHAT_ID")

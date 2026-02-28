@@ -4,8 +4,13 @@
 
 ## Запуск
 
+1. Запустить PostgreSQL
+2. Запустить Redis
+3. Запустить:
+
 ```bash
 poetry install
+poetry run alembic upgrade head 
 poetry run uvicorn src.cli.fastapi_app:app --reload --port 8001
 ```
 

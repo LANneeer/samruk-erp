@@ -1,15 +1,15 @@
 FROM python:3.12-slim AS builder
 
 ENV POETRY_VERSION=2.1.1 \
-    PIP_NO_CACHE_DIR=1
+  PIP_NO_CACHE_DIR=1
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends build-essential curl git \
- && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --no-install-recommends build-essential curl git \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN python -m venv /opt/poetry-venv \
- && /opt/poetry-venv/bin/pip install --upgrade pip \
- && /opt/poetry-venv/bin/pip install "poetry==${POETRY_VERSION}"
+  && /opt/poetry-venv/bin/pip install --upgrade pip \
+  && /opt/poetry-venv/bin/pip install "poetry==${POETRY_VERSION}"
 ENV PATH="/opt/poetry-venv/bin:$PATH"
 
 WORKDIR /app
@@ -21,7 +21,7 @@ COPY apps/user-service/pyproject.toml apps/user-service/poetry.lock ./apps/user-
 WORKDIR /app/apps/user-service
 
 RUN POETRY_VIRTUALENVS_IN_PROJECT=true \
-    poetry install --no-root --only main -n
+  poetry install --no-root --only main -n
 
 COPY apps/user-service/src ./src
 COPY apps/user-service/alembic ./alembic
@@ -31,12 +31,12 @@ COPY apps/user-service/README.md ./README.md
 FROM python:3.12-slim AS api
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+  PYTHONUNBUFFERED=1 \
+  PIP_NO_CACHE_DIR=1
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl \
- && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

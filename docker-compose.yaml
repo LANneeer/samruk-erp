@@ -1,0 +1,49 @@
+version: "3.9"
+
+volumes:
+  postgres_data: {}
+
+x-conf-environment: &conf-environment
+  APP_NAME: "${APP_NAME}"
+  DEV: "${DEV}"
+  DATABASE_URL: "${DATABASE_URL}"
+  POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+  POSTGRES_USER: "${POSTGRES_USER}"
+  PGDATA: "${PGDATA}"
+  POSTGRES_DB: "${POSTGRES_DB}"
+
+  LOG_LEVEL: "${LOG_LEVEL}"
+
+  REDIS_URL: "${REDIS_URL}"
+  IDEMPOTENCY_TTL_SEC: "${IDEMPOTENCY_TTL_SEC}"
+
+  USER_SERVICE_URL: "${USER_SERVICE_URL}"
+
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile
+    environment: *conf-environment
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./apps/user-service/src:/app/apps/user-service/src
+
+  postgres:
+    image: postgres:12
+    container_name: db
+    environment:
+      POSTGRES_DB: "$POSTGRES_DB"
+      POSTGRES_PASSWORD: "$POSTGRES_PASSWORD"
+      POSTGRES_USER: "$POSTGRES_USER"
+      PGDATA: "$PGDATA"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    expose: ["5432"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
