@@ -1,9 +1,9 @@
 from typing import Any, Protocol
 from uuid import UUID
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
-from src.domains.users.model import User, Role, UserRegistered, UserProfileUpdated, UserPasswordChanged, UserActivated, UserDeactivated, UserRoleChanged
+from src.domains.users.model import User, Role, UserRegistered
 from src.dto.commands import RegisterUser, UpdateUserProfile, ChangeUserPassword, ActivateUser, DeactivateUser, PromoteToAdmin
-from src.domains.common.exceptions import DuplicateEmail, DuplicateUsername, NotFound, Conflict
+from utils.domains.common.exceptions import DuplicateEmail, DuplicateUsername, NotFound, Conflict
 
 class Notifier(Protocol):
     async def send(self, *, channel: str, message: str) -> None: ...

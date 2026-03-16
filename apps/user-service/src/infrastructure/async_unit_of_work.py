@@ -3,10 +3,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from patterns.repository import AbstractRepository
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
-from patterns.observability import ObservabilityHook, NoopHook
 from src.infrastructure.db_async import AsyncSessionLocal
 from src.repository.sqlalchemy_async import SqlAlchemyAsyncUserRepository
-from src.domains.common.exceptions import DuplicateEmail, DuplicateUsername, DatabaseConflict
+from utils.domains.common.exceptions import DatabaseConflict
 
 
 class AsyncUnitOfWork(AsyncAbstractUnitOfWork):

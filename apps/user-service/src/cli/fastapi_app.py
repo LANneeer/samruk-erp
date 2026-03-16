@@ -20,13 +20,14 @@ from src.dto.commands import (
 from src.bootstrap.async_settings import bootstrap_async
 from src.infrastructure.async_unit_of_work import AsyncUnitOfWork
 from src.infrastructure.hooks import PromAuditHook
-from src.infrastructure.middleware import (
+from utils.infrastructure.idempotency_middleware import (
     IdempotencyMiddleware,
     MetricsMiddleware,
     prom_endpoint,
 )
-from src.cli.error import install_exception_handlers
+from utils.infrastructure.error import install_exception_handlers
 from src.config import settings
+from src.infrastructure.logging import get_request_id
 
 app = FastAPI(
     title="User Service (async)", servers=[{"url": "/api/users"}, {"url": "/"}]
@@ -39,7 +40,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(IdempotencyMiddleware)
+app.add_middleware(IdempotencyMiddleware, redis_url=settings.REDIS_URL, ttl_sec=settings.IDEMPOTENCY_TTL_SEC, get_request_id=get_request_id)
 if settings.PROM_ENABLED:
     app.add_middleware(MetricsMiddleware)
 install_exception_handlers(app)

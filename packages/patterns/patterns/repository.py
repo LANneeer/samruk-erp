@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Generic, Optional, TypeVar, Set, Any
 
-from .aggregator import AbstractAggregate
+from .aggregator import Aggregate
 
 
-T = TypeVar("T", bound=AbstractAggregate)
+T = TypeVar("T", bound=Aggregate)
 
 
 class AbstractRepository(Generic[T], ABC):

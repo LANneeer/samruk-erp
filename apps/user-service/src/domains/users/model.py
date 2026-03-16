@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import UUID, uuid4
-from patterns.aggregator import AbstractAggregate
+from patterns.aggregator import Aggregate
 
 from src.dto.commands import (
     UserActivated,
@@ -17,7 +17,7 @@ class Role(str, Enum):
     USER = "user"
     ADMIN = "admin"
 
-class User(AbstractAggregate):
+class User(Aggregate):
     def __init__(
         self,
         *,

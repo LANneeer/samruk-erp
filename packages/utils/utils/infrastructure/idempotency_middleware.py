@@ -1,15 +1,14 @@
 import asyncio
 import json
+import logging
 import zlib
 import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Callable
 from fastapi import Request, Response
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from starlette.middleware.base import BaseHTTPMiddleware
 from redis.asyncio import Redis
-from src.config import settings
-from src.infrastructure.logging import get_request_id, logging
 
 logger = logging.getLogger("cached")
 REQS = Counter("http_requests_total", "Total HTTP requests", ["method","path","status"])
@@ -44,8 +43,11 @@ def make_key(request: Request) -> str:
     return f"idem:{request.method}:{request.url.path}:{idem_hdr}"
 
 class IdempotencyMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app):
+    def __init__(self, app, redis_url: str, ttl_sec: int, get_request_id: Optional[Callable[[], str]] = None):
         super().__init__(app)
+        self.redis_url = redis_url
+        self.ttl_sec = ttl_sec
+        self.get_request_id = get_request_id
         self.redis: Optional[Redis] = None
         self._init_lock = asyncio.Lock()
 
@@ -53,7 +55,7 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
         if self.redis is None:
             async with self._init_lock:
                 if self.redis is None:
-                    self.redis = await Redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=False)
+                    self.redis = await Redis.from_url(self.redis_url, encoding="utf-8", decode_responses=False)
 
     async def dispatch(self, request: Request, call_next):
         await self._ensure()
@@ -63,7 +65,10 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
             cached = await self.redis.get(key)
             if cached:
                 cr = CachedResponse.from_bytes(cached)
-                logger.info("Idempotency hit", extra={"request_id": get_request_id(), "audit": {"idempotency": "hit","key": key}})
+                extra = {"audit": {"idempotency": "hit","key": key}}
+                if self.get_request_id:
+                    extra["request_id"] = self.get_request_id()
+                logger.info("Idempotency hit", extra=extra)
                 return Response(content=cr.body, status_code=cr.status, headers=cr.headers)
 
             response: Response = await call_next(request)
@@ -73,8 +78,11 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
             new_resp = Response(content=body, status_code=response.status_code, headers=dict(response.headers))
 
             cr = CachedResponse(status=new_resp.status_code, headers=dict(new_resp.headers), body=body)
-            await self.redis.setex(key, settings.IDEMPOTENCY_TTL_SEC, cr.to_bytes())
-            logger.info("Idempotency store", extra={"request_id": get_request_id(), "audit": {"idempotency": "store","key": key}})
+            await self.redis.setex(key, self.ttl_sec, cr.to_bytes())
+            extra = {"audit": {"idempotency": "store","key": key}}
+            if self.get_request_id:
+                extra["request_id"] = self.get_request_id()
+            logger.info("Idempotency store", extra=extra)
             return new_resp
 
         return await call_next(request)

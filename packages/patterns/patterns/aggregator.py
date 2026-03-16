@@ -4,7 +4,7 @@ from typing import List, Iterable
 from .message import Event
 
 
-class AbstractAggregate(ABC):
+class Aggregate(ABC):
     """
     Aggregate - это корневая сущность доменной модели, которая
     - управляет внутренним состоянием

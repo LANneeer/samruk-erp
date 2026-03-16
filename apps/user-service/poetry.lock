@@ -1003,6 +1003,20 @@ socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
+name = "utils"
+version = "0.1.0"
+description = "Base external library implementations"
+optional = false
+python-versions = "^3.12"
+groups = ["main"]
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "../../packages/utils"
+
+[[package]]
 name = "uvicorn"
 version = "0.35.0"
 description = "The lightning-fast ASGI server."
@@ -1115,4 +1129,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "ac4eeeeac5c8c1633e1cd5fe3fecb3a7e3e3ead926657270281985ab191374f5"
+content-hash = "7bacee4804abc0aa2baefef3ed1815b01343fc5b8a30e663f9692e3e40acdc84"

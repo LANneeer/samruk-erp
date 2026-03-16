@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette import status
 
-from src.domains.common import exceptions as ex
+from utils.domains.common import exceptions as ex
 
 def install_exception_handlers(app: FastAPI) -> None:
     EXC_MAP = {
@@ -19,7 +19,7 @@ def install_exception_handlers(app: FastAPI) -> None:
 
     for exc_type, http_code in EXC_MAP.items():
         @app.exception_handler(exc_type)
-        async def _handler(request: Request, exc: exc_type, __code=http_code):
+        async def _handler(request: Request, exc=exc_type, __code=http_code):
             cid = getattr(request.state, "correlation_id", None)
             return JSONResponse(
                 status_code=__code,
