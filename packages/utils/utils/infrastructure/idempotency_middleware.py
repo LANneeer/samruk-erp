@@ -39,8 +39,8 @@ class CachedResponse:
         )
 
 def make_key(request: Request) -> str:
-    idem_hdr = request.headers.get("Idempotency-Key", "")
-    return f"idem:{request.method}:{request.url.path}:{idem_hdr}"
+    header_key = request.headers.get("Idempotency-Key", "")
+    return f"idem:{request.method}:{request.url.hostname}:{request.url.port}:{request.url.path}:{header_key}"
 
 class IdempotencyMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, redis_url: str, ttl_sec: int, get_request_id: Optional[Callable[[], str]] = None):
