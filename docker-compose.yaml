@@ -24,6 +24,7 @@ services:
     ports:
       - "8001:8001"
     volumes:
+      - ./packages/:/app/packages
       - ./apps/user-service/src:/app/apps/user-service/src
 
   document-service:
@@ -34,6 +35,7 @@ services:
     ports:
       - "8002:8002"
     volumes:
+      - ./packages/:/app/packages
       - ./apps/document-service/src:/app/apps/document-service/src
 
   postgres:

@@ -56,4 +56,7 @@ ENV PATH="/app/apps/document-service/.venv/bin:$PATH"
 EXPOSE 8002
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost:8002/docs >/dev/null || exit 1
 
-CMD sh -c 'alembic upgrade head && uvicorn src.cli.fastapi_app:app --reload --host 0.0.0.0 --port 8002'
+CMD sh -c 'alembic upgrade head && uvicorn src.cli.fastapi_app:app \
+    --host 0.0.0.0 --port 8002 \
+    --reload --reload-dir /app/apps/document-service/src --reload-dir /app/packages'
+    
