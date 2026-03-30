@@ -69,7 +69,5 @@ async def handle_promote_to_admin(cmd: PromoteToAdmin, uow: AsyncAbstractUnitOfW
     await uow.commit()
 
 async def on_user_registered(evt: UserRegistered, notifier: Notifier | None = None, publisher: Publisher | None = None) -> None:
-    if notifier:
-        await notifier.send(channel="telegram", message=f"New user registered: {evt.username} ({evt.email})")
     if publisher:
         await publisher.publish(topic="user.registered", payload={"user_id": str(evt.user_id), "email": evt.email})

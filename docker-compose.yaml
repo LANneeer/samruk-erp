@@ -15,8 +15,6 @@ x-conf-environment: &conf-environment
   REDIS_URL: "${REDIS_URL}"
   IDEMPOTENCY_TTL_SEC: "${IDEMPOTENCY_TTL_SEC}"
 
-  USER_SERVICE_URL: "${USER_SERVICE_URL}"
-
 services:
   user-service:
     build:
@@ -27,6 +25,16 @@ services:
       - "8001:8001"
     volumes:
       - ./apps/user-service/src:/app/apps/user-service/src
+
+  document-service:
+    build:
+      context: .
+      dockerfile: apps/document-service/Dockerfile
+    environment: *conf-environment
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./apps/document-service/src:/app/apps/document-service/src
 
   postgres:
     image: postgres:12

@@ -104,8 +104,6 @@ def handle_promote_to_admin(cmd: PromoteToAdmin, uow: AbstractUnitOfWork) -> Non
 
 
 def on_user_registered(evt: UserRegistered, notifier: Notifier | None = None, publisher: Publisher | None = None) -> None:
-    if notifier:
-        notifier.send(channel="telegram", message=f"New user registered: {evt.username} ({evt.email})")
     if publisher:
         publisher.publish(topic="user.registered", payload={"user_id": str(evt.user_id), "email": evt.email})
 
