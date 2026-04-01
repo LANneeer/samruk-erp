@@ -28,8 +28,6 @@ class Settings(BaseModel):
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     IDEMPOTENCY_TTL_SEC: int = int(os.getenv("IDEMPOTENCY_TTL_SEC", "5"))
 
-    TELEGRAM_BOT_TOKEN: str | None = os.getenv("TELEGRAM_BOT_TOKEN")
-    TELEGRAM_CHAT_ID: str | None = os.getenv("TELEGRAM_CHAT_ID")
     EMAIL_SMTP_HOST: str | None = os.getenv("EMAIL_SMTP_HOST")
     EMAIL_SMTP_PORT: int = int(os.getenv("EMAIL_SMTP_PORT", "587"))
     EMAIL_USER: str | None = os.getenv("EMAIL_USER")
