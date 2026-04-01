@@ -11,7 +11,9 @@ from fastapi import (
     File,
     Response,
 )
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from src.domains.documents.model import get_document_file_path
 from src.gateway.schemas.documents import (
     DocumentReadDTO,
     DocumentUpdateDTO,
@@ -49,6 +51,9 @@ if settings.PROM_ENABLED:
     app.add_middleware(MetricsMiddleware)
 install_exception_handlers(app)
 
+settings.DOCUMENT_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+
 
 async def get_uow():
     async with AsyncUnitOfWork() as uow:
@@ -81,12 +86,9 @@ async def list_documents(
     ]
 
 
-settings.DOCUMENT_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-
-
 async def save_upload_file(upload_file: UploadFile) -> str:
     file_name = f"{uuid4().hex}-{Path(upload_file.filename).name}"
-    file_path = settings.DOCUMENT_STORAGE_DIR / file_name
+    file_path = get_document_file_path(file_name)
     with file_path.open("wb") as f:
         while chunk := await upload_file.read(1024 * 1024):
             f.write(chunk)
@@ -140,6 +142,18 @@ async def get_document(
         created_at=doc.created_at,
         updated_at=doc.updated_at,
     )
+
+
+@app.get("/documents/{document_id}/download", response_class=FileResponse)
+async def download_document(
+    document_id: UUID,
+    uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
+):
+    doc = await uow.documents.get_async(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found in DB")
+    file_path = get_document_file_path(doc.file_name)
+    return FileResponse(path=file_path, filename=doc.file_name, media_type='application/octet-stream')
 
 
 @app.patch("/documents/{document_id}", response_model=DocumentReadDTO)

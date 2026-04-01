@@ -20,6 +20,7 @@ dependencies = [
 	"prometheus-client (>=0.22.1,<0.23.0)",
 	"redis (>=6.4.0,<7.0.0)",
 	"python-logstash-async (>=4.0.2,<5.0.0)",
+	"python-multipart (>=0.0.22,<0.0.23)",
 ]
 
 

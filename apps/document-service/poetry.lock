@@ -843,6 +843,18 @@ dev = ["django", "flask"]
 docs = ["sphinx-rtd-theme"]
 
 [[package]]
+name = "python-multipart"
+version = "0.0.22"
+description = "A streaming multipart parser for Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "python_multipart-0.0.22-py3-none-any.whl", hash = "sha256:2b2cd894c83d21bf49d702499531c7bafd057d730c201782048f7945d82de155"},
+    {file = "python_multipart-0.0.22.tar.gz", hash = "sha256:7340bef99a7e0032613f56dc36027b959fd3b30a787ed62d310e951f7c3a3a58"},
+]
+
+[[package]]
 name = "redis"
 version = "6.4.0"
 description = "Python client for Redis database and key-value store"
@@ -1187,4 +1199,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.12"
-content-hash = "4330c581dd66a0ec0976ca6b3f69f8b5e3e4ebecd74a3d171e77992665fc978f"
+content-hash = "c8c9fd6ad9e872b0bcb8e2136fd9e4dff90181f0f82d51ef6bfda06d4d25d7ab"

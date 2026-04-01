@@ -1,5 +1,6 @@
 volumes:
   postgres_data: {}
+  documents_data: {}
 
 x-conf-environment: &conf-environment
   APP_NAME: "${APP_NAME}"
@@ -37,6 +38,7 @@ services:
     volumes:
       - ./packages/:/app/packages
       - ./apps/document-service/src:/app/apps/document-service/src
+      - documents_data:${DOCUMENT_STORAGE_DIR}
 
   postgres:
     image: postgres:12
