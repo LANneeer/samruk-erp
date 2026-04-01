@@ -585,7 +585,7 @@ name = "patterns"
 version = "0.1.0"
 description = "Essential design patterns store"
 optional = false
-python-versions = "^3.12"
+python-versions = "~3.12"
 groups = ["main"]
 files = []
 develop = true
@@ -1007,7 +1007,7 @@ name = "utils"
 version = "0.1.0"
 description = "Base external library implementations"
 optional = false
-python-versions = "^3.12"
+python-versions = "~3.12"
 groups = ["main"]
 files = []
 develop = true
@@ -1128,5 +1128,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.12"
-content-hash = "7bacee4804abc0aa2baefef3ed1815b01343fc5b8a30e663f9692e3e40acdc84"
+python-versions = "~3.12"
+content-hash = "3a48bbba70d147c53c179745f5260818cab3e09f7f1961b013abf94025c5a9dc"

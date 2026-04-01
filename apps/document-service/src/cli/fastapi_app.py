@@ -8,6 +8,7 @@ from fastapi import (
     status,
     Query,
     UploadFile,
+    File,
     Response,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,7 +98,7 @@ async def create_document(
     uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
     title: str,
     author_id: UUID,
-    file: UploadFile,
+    file: UploadFile = File(...),
 ):
     file_name = await save_upload_file(file)
     hook = PromAuditHook()
