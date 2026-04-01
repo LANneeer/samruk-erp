@@ -1,9 +1,17 @@
+from pathlib import Path
 from typing import Annotated
-from uuid import UUID
-from fastapi import FastAPI, Depends, HTTPException, status, Query, Request, Response
+from uuid import UUID, uuid4
+from fastapi import (
+    FastAPI,
+    Depends,
+    HTTPException,
+    status,
+    Query,
+    UploadFile,
+    Response,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from src.gateway.schemas.documents import (
-    DocumentCreateDTO,
     DocumentReadDTO,
     DocumentUpdateDTO,
 )
@@ -63,7 +71,7 @@ async def list_documents(
         DocumentReadDTO(
             id=d.id,
             title=d.title,
-            content=d.content,
+            file_name=d.file_name,
             author_id=d.author_id,
             created_at=d.created_at,
             updated_at=d.updated_at,
@@ -72,18 +80,33 @@ async def list_documents(
     ]
 
 
+settings.DOCUMENT_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+async def save_upload_file(upload_file: UploadFile) -> str:
+    file_name = f"{uuid4().hex}-{Path(upload_file.filename).name}"
+    file_path = settings.DOCUMENT_STORAGE_DIR / file_name
+    with file_path.open("wb") as f:
+        while chunk := await upload_file.read(1024 * 1024):
+            f.write(chunk)
+    return file_name
+
+
 @app.post("/documents", response_model=DocumentReadDTO, status_code=status.HTTP_201_CREATED)
 async def create_document(
-    dto: DocumentCreateDTO,
     uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
+    title: str,
+    author_id: UUID,
+    file: UploadFile,
 ):
+    file_name = await save_upload_file(file)
     hook = PromAuditHook()
     bus = bootstrap_async(uow, hook=hook)
     results = await bus.handle(
         CreateDocument(
-            title=dto.title,
-            content=dto.content,
-            author_id=dto.author_id,
+            title=title,
+            file_name=file_name,
+            author_id=author_id,
         )
     )
     doc_id = results[0]
@@ -93,7 +116,7 @@ async def create_document(
     return DocumentReadDTO(
         id=doc.id,
         title=doc.title,
-        content=doc.content,
+        file_name=doc.file_name,
         author_id=doc.author_id,
         created_at=doc.created_at,
         updated_at=doc.updated_at,
@@ -111,7 +134,7 @@ async def get_document(
     return DocumentReadDTO(
         id=doc.id,
         title=doc.title,
-        content=doc.content,
+        file_name=doc.file_name,
         author_id=doc.author_id,
         created_at=doc.created_at,
         updated_at=doc.updated_at,
@@ -120,16 +143,14 @@ async def get_document(
 
 @app.patch("/documents/{document_id}", response_model=DocumentReadDTO)
 async def update_document(
+    uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
     document_id: UUID,
     dto: DocumentUpdateDTO,
-    uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
 ):
     hook = PromAuditHook()
     bus = bootstrap_async(uow, hook=hook)
     await bus.handle(
-        UpdateDocument(
-            document_id=document_id, title=dto.title, content=dto.content
-        )
+        UpdateDocument(document_id=document_id, title=dto.title)
     )
     doc = await uow.documents.get_async(document_id)
     if not doc:
@@ -137,7 +158,7 @@ async def update_document(
     return DocumentReadDTO(
         id=doc.id,
         title=doc.title,
-        content=doc.content,
+        file_name=doc.file_name,
         author_id=doc.author_id,
         created_at=doc.created_at,
         updated_at=doc.updated_at,

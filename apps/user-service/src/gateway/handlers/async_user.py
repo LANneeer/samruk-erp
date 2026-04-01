@@ -1,8 +1,11 @@
 from typing import Any, Protocol
 from uuid import UUID
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
-from src.domains.users.model import User, Role, UserRegistered
-from src.dto.commands import RegisterUser, UpdateUserProfile, ChangeUserPassword, ActivateUser, DeactivateUser, PromoteToAdmin
+from src.domains.users.model import User, Role
+from src.dto.commands import (
+    RegisterUser, UpdateUserProfile, ChangeUserPassword, ActivateUser, DeactivateUser, PromoteToAdmin,
+    UserRegistered, UserProfileUpdated, UserPasswordChanged, UserActivated, UserDeactivated, UserRoleChanged
+)
 from utils.domains.common.exceptions import DuplicateEmail, DuplicateUsername, NotFound, Conflict
 
 class Notifier(Protocol):
@@ -71,3 +74,23 @@ async def handle_promote_to_admin(cmd: PromoteToAdmin, uow: AsyncAbstractUnitOfW
 async def on_user_registered(evt: UserRegistered, notifier: Notifier | None = None, publisher: Publisher | None = None) -> None:
     if publisher:
         await publisher.publish(topic="user.registered", payload={"user_id": str(evt.user_id), "email": evt.email})
+
+async def on_user_profile_updated(evt: UserProfileUpdated, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.profile_updated", payload={"user_id": str(evt.user_id), "changes": evt.changes})
+
+async def on_user_password_changed(evt: UserPasswordChanged, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.password_changed", payload={"user_id": str(evt.user_id)})
+
+async def on_user_activated(evt: UserActivated, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.activated", payload={"user_id": str(evt.user_id)})
+
+async def on_user_deactivated(evt: UserDeactivated, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.deactivated", payload={"user_id": str(evt.user_id)})
+
+async def on_user_role_changed(evt: UserRoleChanged, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.role_changed", payload={"user_id": str(evt.user_id), "role": evt.new_role})

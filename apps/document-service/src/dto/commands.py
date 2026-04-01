@@ -9,7 +9,7 @@ from uuid import UUID
 class DocumentCreated(Event):
     document_id: UUID
     title: str
-    content: str
+    file_name: str
     author_id: UUID
 
 
@@ -27,7 +27,7 @@ class DocumentDeleted(Event):
 @dataclass(frozen=True, slots=True)
 class CreateDocument(Command):
     title: str
-    content: str
+    file_name: str
     author_id: UUID
 
 
@@ -35,7 +35,6 @@ class CreateDocument(Command):
 class UpdateDocument(Command):
     document_id: UUID
     title: str | None = None
-    content: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

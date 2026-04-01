@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
+from pathlib import Path
 from patterns.aggregator import Aggregate
 
 from src.dto.commands import (
@@ -7,6 +8,7 @@ from src.dto.commands import (
     DocumentUpdated,
     DocumentDeleted,
 )
+from src.config import settings
 
 
 class Document(Aggregate):
@@ -15,7 +17,7 @@ class Document(Aggregate):
         *,
         document_id: UUID | None = None,
         title: str,
-        content: str,
+        file_name: str,
         author_id: UUID,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
@@ -24,7 +26,7 @@ class Document(Aggregate):
         now = datetime.now(timezone.utc)
         self._id: UUID = document_id or uuid4()
         self._title: str = title
-        self._content: str = content
+        self._file_name: str = file_name
         self._author_id: UUID = author_id
         self._created_at: datetime = created_at or now
         self._updated_at: datetime = updated_at or now
@@ -34,19 +36,19 @@ class Document(Aggregate):
         cls,
         *,
         title: str,
-        content: str,
+        file_name: str,
         author_id: UUID,
     ):
         document = cls(
             title=title,
-            content=content,
+            file_name=file_name,
             author_id=author_id,
         )
         document._record_event(
             DocumentCreated(
                 document_id=document.id,
                 title=document.title,
-                content=document.content,
+                file_name=document.file_name,
                 author_id=document.author_id,
             )
         )
@@ -58,7 +60,7 @@ class Document(Aggregate):
         *,
         document_id: UUID,
         title: str,
-        content: str,
+        file_name: str,
         author_id: UUID,
         created_at: datetime,
         updated_at: datetime,
@@ -66,7 +68,7 @@ class Document(Aggregate):
         return cls(
             document_id=document_id,
             title=title,
-            content=content,
+            file_name=file_name,
             author_id=author_id,
             created_at=created_at,
             updated_at=updated_at,
@@ -79,7 +81,7 @@ class Document(Aggregate):
     def title(self) -> str: return self._title
 
     @property
-    def content(self) -> str: return self._content
+    def file_name(self) -> str: return self._file_name
 
     @property
     def author_id(self) -> UUID: return self._author_id
@@ -90,6 +92,7 @@ class Document(Aggregate):
     @property
     def updated_at(self) -> datetime: return self._updated_at
 
+
     def update_title(self, new_title: str) -> None:
         if not new_title:
             raise ValueError("Title should be non-empty")
@@ -99,12 +102,12 @@ class Document(Aggregate):
         self._touch()
         self._record_event(DocumentUpdated(document_id=self.id, changes={"title": new_title}))
 
-    def update_content(self, new_content: str) -> None:
-        if new_content == self._content:
-            return
-        self._content = new_content
-        self._touch()
-        self._record_event(DocumentUpdated(document_id=self.id, changes={"content": new_content}))
+    def get_file_path(self) -> Path:
+        return settings.DOCUMENT_STORAGE_DIR / self.file_name
+    
+    def delete(self) -> None:
+        self.get_file_path().unlink(missing_ok=True)
+        self._record_event(DocumentDeleted(document_id=self.id))
 
     def _touch(self) -> None:
         self._updated_at = datetime.now(timezone.utc)

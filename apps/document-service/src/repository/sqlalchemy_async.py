@@ -32,7 +32,7 @@ class SqlAlchemyAsyncDocumentRepository(AbstractRepository[Document]):
             self.session.add(orm_obj)
         else:
             orm_obj.title = aggregate.title
-            orm_obj.content = aggregate.content
+            orm_obj.file_name = aggregate.file_name
             orm_obj.author_id = aggregate.author_id
             orm_obj.updated_at = now
 
@@ -57,7 +57,7 @@ class SqlAlchemyAsyncDocumentRepository(AbstractRepository[Document]):
         return Document.restore(
             document_id=row.id,
             title=row.title,
-            content=row.content,
+            file_name=row.file_name,
             author_id=row.author_id,
             created_at=row.created_at,
             updated_at=row.updated_at,
@@ -68,7 +68,7 @@ class SqlAlchemyAsyncDocumentRepository(AbstractRepository[Document]):
         return DocumentORM(
             id=agg.id,
             title=agg.title,
-            content=agg.content,
+            file_name=agg.file_name,
             author_id=agg.author_id,
             created_at=agg.created_at,
             updated_at=agg.updated_at,

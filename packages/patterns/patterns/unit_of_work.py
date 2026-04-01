@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
-from typing import Generator, Iterable, Tuple
+from typing import Generator, Tuple
 
 from .message import Event
 from .repository import AbstractRepository

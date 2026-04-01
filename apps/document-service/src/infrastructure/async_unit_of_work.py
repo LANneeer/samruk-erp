@@ -34,7 +34,7 @@ class AsyncUnitOfWork(AsyncAbstractUnitOfWork):
         try:
             if self.session:
                 await self.session.commit()
-        except IntegrityError as e:
+        except IntegrityError:
             raise DatabaseConflict("Database conflict")
 
     async def _rollback(self) -> None:

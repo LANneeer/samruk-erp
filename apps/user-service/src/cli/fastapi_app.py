@@ -1,7 +1,14 @@
 import hashlib
 from typing import Annotated
 from uuid import UUID
-from fastapi import FastAPI, Depends, HTTPException, status, Query, Request, Response
+from fastapi import (
+    FastAPI,
+    Depends,
+    HTTPException,
+    status,
+    Query,
+    Response,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from src.gateway.schemas.users import (
     UserCreateDTO,

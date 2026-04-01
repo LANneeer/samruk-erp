@@ -1,20 +1,14 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
-
-class DocumentCreateDTO(BaseModel):
-    title: str = Field(min_length=1)
-    content: str
-    author_id: UUID
 
 class DocumentReadDTO(BaseModel):
     id: UUID
     title: str
-    content: str
+    file_name: str
     author_id: UUID
     created_at: datetime
     updated_at: datetime
 
 class DocumentUpdateDTO(BaseModel):
     title: str | None = None
-    content: str | None = None

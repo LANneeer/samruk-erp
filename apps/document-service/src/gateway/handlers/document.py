@@ -1,6 +1,7 @@
 from typing import Any, Protocol
 from uuid import UUID
 
+from utils.domains.common.exceptions import NotFound
 from patterns.unit_of_work import AbstractUnitOfWork
 from src.domains.documents.model import Document
 from src.dto.commands import (
@@ -24,7 +25,7 @@ class Publisher(Protocol):
 def handle_create_document(cmd: CreateDocument, uow: AbstractUnitOfWork) -> UUID:
     document = Document.create(
         title=cmd.title,
-        content=cmd.content,
+        file_name=cmd.file_name,
         author_id=cmd.author_id,
     )
     uow.documents.add(document)
@@ -35,23 +36,20 @@ def handle_create_document(cmd: CreateDocument, uow: AbstractUnitOfWork) -> UUID
 def handle_update_document(cmd: UpdateDocument, uow: AbstractUnitOfWork) -> None:
     document = uow.documents.get(cmd.document_id)
     if document is None:
-        raise ValueError("Document not found")
+        raise NotFound("Document not found")
 
     if cmd.title:
         document.update_title(cmd.title)
-
-    if cmd.content is not None:
-        document.update_content(cmd.content)
-
     uow.documents.add(document)
     uow.commit()
 
 
 def handle_delete_document(cmd: DeleteDocument, uow: AbstractUnitOfWork) -> None:
     document = uow.documents.get(cmd.document_id)
-    if document is None:
-        raise ValueError("Document not found")
+    if not document:
+        raise NotFound("Document not found")
 
+    document.delete()
     uow.documents.delete(cmd.document_id)
     uow.commit()
 

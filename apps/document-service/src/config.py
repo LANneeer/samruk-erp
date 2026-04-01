@@ -39,5 +39,7 @@ class Settings(BaseModel):
     TRACING_ENABLED: bool = os.getenv("TRACING_ENABLED", "0") == "1"
     TRACING_ENDPOINT: str | None = os.getenv("TRACING_ENDPOINT")
 
+    DOCUMENT_STORAGE_DIR: Path = Path(os.getenv("DOCUMENT_STORAGE_DIR", "data/documents"))
+
 
 settings = Settings()
