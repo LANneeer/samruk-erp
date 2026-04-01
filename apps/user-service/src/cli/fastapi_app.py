@@ -27,11 +27,8 @@ from src.dto.commands import (
 from src.bootstrap.async_settings import bootstrap_async
 from src.infrastructure.async_unit_of_work import AsyncUnitOfWork
 from src.infrastructure.hooks import PromAuditHook
-from utils.infrastructure.idempotency_middleware import (
-    IdempotencyMiddleware,
-    MetricsMiddleware,
-    prom_endpoint,
-)
+from utils.infrastructure.idempotency_middleware import IdempotencyMiddleware
+from utils.infrastructure.metrics_middleware import MetricsMiddleware, prom_endpoint
 from utils.infrastructure.error import install_exception_handlers
 from src.config import settings
 from src.infrastructure.logging import get_request_id
@@ -47,7 +44,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(IdempotencyMiddleware, redis_url=settings.REDIS_URL, ttl_sec=settings.IDEMPOTENCY_TTL_SEC, get_request_id=get_request_id)
+app.add_middleware(IdempotencyMiddleware, 
+        redis_url=settings.REDIS_URL, 
+        ttl_sec=settings.IDEMPOTENCY_TTL_SEC, 
+        max_body_bytes=settings.IDEMPOTENCY_MAX_BODY_BYTES, 
+        get_request_id=get_request_id,
+    )
 if settings.PROM_ENABLED:
     app.add_middleware(MetricsMiddleware)
 install_exception_handlers(app)

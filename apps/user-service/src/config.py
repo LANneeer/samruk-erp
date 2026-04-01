@@ -27,6 +27,7 @@ class Settings(BaseModel):
 
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     IDEMPOTENCY_TTL_SEC: int = int(os.getenv("IDEMPOTENCY_TTL_SEC", "5"))
+    IDEMPOTENCY_MAX_BODY_BYTES: int = int(os.getenv("IDEMPOTENCY_MAX_BODY_BYTES", "1048576"))
 
     EMAIL_SMTP_HOST: str | None = os.getenv("EMAIL_SMTP_HOST")
     EMAIL_SMTP_PORT: int = int(os.getenv("EMAIL_SMTP_PORT", "587"))

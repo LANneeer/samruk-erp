@@ -50,7 +50,7 @@ def handle_delete_document(cmd: DeleteDocument, uow: AbstractUnitOfWork) -> None
         raise NotFound("Document not found")
 
     document.delete()
-    uow.documents.delete(cmd.document_id)
+    uow.documents.remove(cmd.document_id)
     uow.commit()
 
 

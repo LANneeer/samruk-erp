@@ -33,7 +33,7 @@ async def handle_delete_document(cmd: DeleteDocument, uow: AsyncAbstractUnitOfWo
         raise NotFound("Document not found")
     
     document.delete()
-    await uow.documents.delete(cmd.document_id)
+    await uow.documents.remove(cmd.document_id)
     await uow.commit()
 
 async def on_document_created(evt: DocumentCreated, notifier: Notifier | None = None, publisher: Publisher | None = None) -> None:
