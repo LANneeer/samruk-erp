@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 from uuid import UUID, uuid4
+from logging import getLogger
 from fastapi import (
     FastAPI,
     Depends,
@@ -31,6 +32,8 @@ from utils.infrastructure.metrics_middleware import MetricsMiddleware, prom_endp
 from utils.infrastructure.error import install_exception_handlers
 from src.config import settings
 from src.infrastructure.logging import get_request_id
+
+logger = getLogger("fastapi_app")
 
 app = FastAPI(
     title="Document Service (async)", servers=[{"url": "/api/documents"}, {"url": "/"}]
@@ -91,6 +94,7 @@ async def list_documents(
 async def save_upload_file(upload_file: UploadFile) -> str:
     file_name = f"{uuid4().hex}-{Path(upload_file.filename).name}"
     file_path = get_document_file_path(file_name)
+    logger.info(f"Saving uploaded file to '{file_path}'")
     with file_path.open("wb") as f:
         while chunk := await upload_file.read(1024 * 1024):
             f.write(chunk)
@@ -155,6 +159,7 @@ async def download_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found in DB")
     file_path = get_document_file_path(doc.file_name)
+    logger.info(f"Serving document file from '{file_path}'")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Document file not found in storage")
     return FileResponse(path=file_path, filename=doc.file_name, media_type='application/octet-stream')
