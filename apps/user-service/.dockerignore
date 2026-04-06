@@ -1,0 +1,54 @@
+# ─── Git ─────────────────────────────
+.git
+.gitignore
+
+# ─── Python ─────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Virtual environments
+venv/
+.env/
+.env.*
+
+# ─── Node (if frontend exists) ──────
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ─── Build / Dist ───────────────────
+build/
+dist/
+*.egg-info/
+
+# ─── Logs ──────────────────────────
+logs/
+*.log
+
+# ─── OS files ──────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE / Editor ──────────────────
+.vscode/
+.idea/
+*.swp
+
+# ─── Docker ────────────────────────
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# ─── Secrets (VERY IMPORTANT) ──────
+.env
+*.pem
+*.key
+*.crt
+
+# ─── Tests (optional) ──────────────
+tests/
+coverage/
