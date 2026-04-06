@@ -1,7 +1,5 @@
 from datetime import datetime, timezone
-import logging
 from uuid import UUID, uuid4
-from pathlib import Path
 from patterns.aggregator import Aggregate
 
 from src.dto.commands import (
@@ -9,12 +7,8 @@ from src.dto.commands import (
     DocumentUpdated,
     DocumentDeleted,
 )
-from src.config import settings
 
-logger = logging.getLogger("document")
 
-def get_document_file_path(file_name) -> Path:
-    return settings.DOCUMENT_STORAGE_DIR / file_name
 
 class Document(Aggregate):
     def __init__(
@@ -108,9 +102,6 @@ class Document(Aggregate):
         self._record_event(DocumentUpdated(document_id=self.id, changes={"title": new_title}))
     
     def delete(self) -> None:
-        file_path = get_document_file_path(self.file_name)
-        logger.info(f"Deleting file '{file_path}' for document {self.id}")
-        file_path.unlink(missing_ok=True)
         self._record_event(DocumentDeleted(document_id=self.id))
 
     def _touch(self) -> None:

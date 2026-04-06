@@ -1,6 +1,5 @@
-from pathlib import Path
 from typing import Annotated
-from uuid import UUID, uuid4
+from uuid import UUID
 from logging import getLogger
 from fastapi import (
     FastAPI,
@@ -14,7 +13,6 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from src.domains.documents.model import get_document_file_path
 from src.gateway.schemas.documents import (
     DocumentReadDTO,
     DocumentUpdateDTO,
@@ -32,11 +30,12 @@ from utils.infrastructure.metrics_middleware import MetricsMiddleware, prom_endp
 from utils.infrastructure.error import install_exception_handlers
 from src.config import settings
 from src.infrastructure.logging import get_request_id
+from src.infrastructure.storage import save_document_file, delete_document_file, get_document_file_path
 
 logger = getLogger("fastapi_app")
 
 app = FastAPI(
-    title="Document Service (async)", servers=[{"url": "/api/documents"}, {"url": "/"}]
+    title="Document Service", servers=[{"url": "/api/documents"}, {"url": "/"}]
 )
 
 app.add_middleware(
@@ -56,7 +55,6 @@ if settings.PROM_ENABLED:
     app.add_middleware(MetricsMiddleware)
 install_exception_handlers(app)
 
-settings.DOCUMENT_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 
@@ -91,16 +89,6 @@ async def list_documents(
     ]
 
 
-async def save_upload_file(upload_file: UploadFile) -> str:
-    file_name = f"{uuid4().hex}-{Path(upload_file.filename).name}"
-    file_path = get_document_file_path(file_name)
-    logger.info(f"Saving uploaded file to '{file_path}'")
-    with file_path.open("wb") as f:
-        while chunk := await upload_file.read(1024 * 1024):
-            f.write(chunk)
-    return file_name
-
-
 @app.post("/documents", response_model=DocumentReadDTO, status_code=status.HTTP_201_CREATED)
 async def create_document(
     uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
@@ -108,20 +96,23 @@ async def create_document(
     author_id: UUID,
     file: UploadFile = File(...),
 ):
-    file_name = await save_upload_file(file)
     hook = PromAuditHook()
     bus = bootstrap_async(uow, hook=hook)
     results = await bus.handle(
         CreateDocument(
             title=title,
-            file_name=file_name,
+            file_name=file.filename,
             author_id=author_id,
         )
     )
     doc_id = results[0]
     doc = await uow.documents.get_async(doc_id)
     if not doc:
-        raise HTTPException(status_code=500, detail="Document not persisted")
+        raise HTTPException(status_code=500, detail="Document not created")
+    
+    # wait until document is uploaded and saved to storage
+    await save_document_file(file, doc_id)
+    
     return DocumentReadDTO(
         id=doc.id,
         title=doc.title,
@@ -158,7 +149,7 @@ async def download_document(
     doc = await uow.documents.get_async(document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found in DB")
-    file_path = get_document_file_path(doc.file_name)
+    file_path = get_document_file_path(document_id)
     logger.info(f"Serving document file from '{file_path}'")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Document file not found in storage")
@@ -197,4 +188,5 @@ async def delete_document(
     hook = PromAuditHook()
     bus = bootstrap_async(uow, hook=hook)
     await bus.handle(DeleteDocument(document_id=document_id))
+    delete_document_file(document_id)
     return None

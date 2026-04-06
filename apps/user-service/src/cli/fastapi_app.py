@@ -34,7 +34,7 @@ from src.config import settings
 from src.infrastructure.logging import get_request_id
 
 app = FastAPI(
-    title="User Service (async)", servers=[{"url": "/api/users"}, {"url": "/"}]
+    title="User Service", servers=[{"url": "/api/users"}, {"url": "/"}]
 )
 
 app.add_middleware(
