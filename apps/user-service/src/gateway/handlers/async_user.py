@@ -2,11 +2,24 @@ from typing import Any, Protocol
 from uuid import UUID
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
 from src.domains.users.model import User, Role
-from src.dto.commands import (
-    RegisterUser, UpdateUserProfile, ChangeUserPassword, ActivateUser, DeactivateUser, PromoteToAdmin,
-    UserRegistered, UserProfileUpdated, UserPasswordChanged, UserActivated, UserDeactivated, UserRoleChanged
-)
 from utils.domains.common.exceptions import DuplicateEmail, DuplicateUsername, NotFound, Conflict
+from src.dto.commands import (
+    RegisterUser,
+    UpdateUserProfile,
+    ChangeUserPassword,
+    ActivateUser,
+    DeactivateUser,
+    PromoteToAdmin,
+)
+from src.dto.commands import (
+    UserRegistered,
+    UserProfileUpdated,
+    UserPasswordChanged,
+    UserActivated,
+    UserDeactivated,
+    UserRoleChanged,
+)
+
 
 class Notifier(Protocol):
     async def send(self, *, channel: str, message: str) -> None: ...

@@ -1,9 +1,19 @@
 from typing import Any, Protocol
 from uuid import UUID
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
-from src.domains.documents.model import Document, DocumentCreated, DocumentUpdated, DocumentDeleted
-from src.dto.commands import CreateDocument, UpdateDocument, DeleteDocument
+from src.domains.documents.model import Document
+from src.dto.commands import (
+    CreateDocument,
+    UpdateDocument,
+    DeleteDocument,
+)
+from src.dto.commands import (
+    DocumentCreated,
+    DocumentUpdated,
+    DocumentDeleted,
+)
 from utils.domains.common.exceptions import NotFound
+
 
 class Notifier(Protocol):
     async def send(self, *, channel: str, message: str) -> None: ...
