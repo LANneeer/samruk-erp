@@ -12,7 +12,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from utils.domains.common.exceptions import DomainError, NotFound
+from utils.domains.common.exceptions import NotFound
 from src.domains.documents.model import Document, Chunk
 from src.gateway.schemas.documents import (
     DocumentReadDTO,

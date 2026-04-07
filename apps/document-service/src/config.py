@@ -1,43 +1,32 @@
-import os
 from pathlib import Path
+from pydantic_settings import BaseSettings
 
-from pydantic import BaseModel
-from dotenv import load_dotenv
+class Settings(BaseSettings):
+    class Config:
+        # load .env file from service root directory
+        env_file = Path(__file__).resolve().parent.parent / ".env"
+    
+    APP_NAME: str = "documents-service"
+    SERVICE_NAME: str = "document-service"
+    PROM_ENABLED: bool = True
 
-dotenv_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(dotenv_path, override=True)
+    DATABASE_URL: str # required
+    DB_POOL_SIZE: int = 10
+    DB_POOL_TIMEOUT: int = 30
 
-#TODO: refactor this to use BaseSettings to raise exception on undefined DATABASE_URL
-class Settings(BaseModel):
-    APP_NAME: str = os.getenv("APP_NAME", "documents-service")
-    ENV: str = os.getenv("ENV", "local")
+    LOG_LEVEL: str = "INFO"
+    LOGSTASH_HOST: str | None = None
+    LOGSTASH_PORT: int = 5044
+    TRACING_ENABLED: bool = False
+    TRACING_ENDPOINT: str | None = None
+    REQUEST_ID_HEADER: str = "X-Request-ID"
 
-    DATABASE_URL: str = os.getenv("DATABASE_URL") # required
-    DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "10"))
-    DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+    REDIS_URL: str = "redis://localhost:6379/0"
+    IDEMPOTENCY_TTL_SEC: int = 5
+    IDEMPOTENCY_MAX_BODY_BYTES: int = 1048576 # 1 MB
 
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    LOGSTASH_HOST: str | None = os.getenv("LOGSTASH_HOST")
-    LOGSTASH_PORT: int = int(os.getenv("LOGSTASH_PORT", "5044"))
-    REQUEST_ID_HEADER: str = os.getenv("REQUEST_ID_HEADER", "X-Request-ID")
-
-    PROM_ENABLED: bool = os.getenv("PROM_ENABLED", "1") == "1"
-
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    IDEMPOTENCY_TTL_SEC: int = int(os.getenv("IDEMPOTENCY_TTL_SEC", "5"))
-    IDEMPOTENCY_MAX_BODY_BYTES: int = int(os.getenv("IDEMPOTENCY_MAX_BODY_BYTES", "1048576"))
-
-    EMAIL_SMTP_HOST: str | None = os.getenv("EMAIL_SMTP_HOST")
-    EMAIL_SMTP_PORT: int = int(os.getenv("EMAIL_SMTP_PORT", "587"))
-    EMAIL_USER: str | None = os.getenv("EMAIL_USER")
-    EMAIL_SMTP_PASSWORD: str | None = os.getenv("EMAIL_SMTP_PASSWORD")
-
-    SERVICE_NAME: str = os.getenv("SERVICE_NAME", "document-service")
-    TRACING_ENABLED: bool = os.getenv("TRACING_ENABLED", "0") == "1"
-    TRACING_ENDPOINT: str | None = os.getenv("TRACING_ENDPOINT")
-
-    DOCUMENT_STORAGE_DIR: Path = Path(os.getenv("DOCUMENT_STORAGE_DIR", "data/documents"))
-    DOCUMENT_CHUNK_ROWS: int = int(os.getenv("DOCUMENT_CHUNK_ROWS", "100"))
-    EMBEDDING_SIZE: int = int(os.getenv("EMBEDDING_SIZE", "1536"))
+    DOCUMENT_STORAGE_DIR: Path = Path("data/documents")
+    DOCUMENT_CHUNK_ROWS: int = 100
+    EMBEDDING_SIZE: int = 1536
 
 settings = Settings()

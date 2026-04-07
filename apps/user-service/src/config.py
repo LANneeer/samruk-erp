@@ -1,42 +1,33 @@
-import os
 from pathlib import Path
+from pydantic_settings import BaseSettings
 
-from pydantic import BaseModel
-from dotenv import load_dotenv
+class Settings(BaseSettings):
+    class Config:
+        # load .env file from service root directory
+        env_file = Path(__file__).resolve().parent.parent / ".env"
+    
+    APP_NAME: str = "users-service"
+    SERVICE_NAME: str = "user-service"
+    PROM_ENABLED: bool = True
 
-dotenv_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(dotenv_path, override=True)
+    DATABASE_URL: str # required
+    DB_POOL_SIZE: int = 10
+    DB_POOL_TIMEOUT: int = 30
 
+    LOG_LEVEL: str = "INFO"
+    LOGSTASH_HOST: str | None = None
+    LOGSTASH_PORT: int = 5044
+    TRACING_ENABLED: bool = False
+    TRACING_ENDPOINT: str | None = None
+    REQUEST_ID_HEADER: str = "X-Request-ID"
 
-class Settings(BaseModel):
-    APP_NAME: str = os.getenv("APP_NAME", "users-service")
-    ENV: str = os.getenv("ENV", "local")
+    REDIS_URL: str = "redis://localhost:6379/0"
+    IDEMPOTENCY_TTL_SEC: int = 5
+    IDEMPOTENCY_MAX_BODY_BYTES: int = 1048576
 
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", "sqlite+aiosqlite:///./payment_service.db"
-    )
-    DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "10"))
-    DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
-
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    LOGSTASH_HOST: str | None = os.getenv("LOGSTASH_HOST")
-    LOGSTASH_PORT: int = int(os.getenv("LOGSTASH_PORT", "5044"))
-    REQUEST_ID_HEADER: str = os.getenv("REQUEST_ID_HEADER", "X-Request-ID")
-
-    PROM_ENABLED: bool = os.getenv("PROM_ENABLED", "1") == "1"
-
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    IDEMPOTENCY_TTL_SEC: int = int(os.getenv("IDEMPOTENCY_TTL_SEC", "5"))
-    IDEMPOTENCY_MAX_BODY_BYTES: int = int(os.getenv("IDEMPOTENCY_MAX_BODY_BYTES", "1048576"))
-
-    EMAIL_SMTP_HOST: str | None = os.getenv("EMAIL_SMTP_HOST")
-    EMAIL_SMTP_PORT: int = int(os.getenv("EMAIL_SMTP_PORT", "587"))
-    EMAIL_USER: str | None = os.getenv("EMAIL_USER")
-    EMAIL_PASSWORD: str | None = os.getenv("EMAIL_PASSWORD")
-
-    SERVICE_NAME: str = os.getenv("SERVICE_NAME", "user-service")
-    TRACING_ENABLED: bool = os.getenv("TRACING_ENABLED", "0") == "1"
-    TRACING_ENDPOINT: str | None = os.getenv("TRACING_ENDPOINT")
-
+    EMAIL_SMTP_HOST: str | None = None
+    EMAIL_SMTP_PORT: int = 587
+    EMAIL_USER: str | None = None
+    EMAIL_PASSWORD: str | None = None
 
 settings = Settings()
