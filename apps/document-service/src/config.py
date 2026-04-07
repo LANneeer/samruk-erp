@@ -7,14 +7,12 @@ from dotenv import load_dotenv
 dotenv_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path, override=True)
 
-
+#TODO: refactor this to use BaseSettings to raise exception on undefined DATABASE_URL
 class Settings(BaseModel):
     APP_NAME: str = os.getenv("APP_NAME", "documents-service")
     ENV: str = os.getenv("ENV", "local")
 
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", "sqlite+aiosqlite:///./document_service.db"
-    )
+    DATABASE_URL: str = os.getenv("DATABASE_URL") # required
     DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "10"))
     DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
 
@@ -39,6 +37,7 @@ class Settings(BaseModel):
     TRACING_ENDPOINT: str | None = os.getenv("TRACING_ENDPOINT")
 
     DOCUMENT_STORAGE_DIR: Path = Path(os.getenv("DOCUMENT_STORAGE_DIR", "data/documents"))
-
+    DOCUMENT_CHUNK_ROWS: int = int(os.getenv("DOCUMENT_CHUNK_ROWS", "100"))
+    EMBEDDING_SIZE: int = int(os.getenv("EMBEDDING_SIZE", "1536"))
 
 settings = Settings()

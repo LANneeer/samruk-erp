@@ -4,14 +4,14 @@ from logstash_async.handler import AsynchronousLogstashHandler
 from fastapi import Request
 from typing import Any
 import contextvars, uuid
+from utils.infrastructure.logging import ExtraFieldsFormatter
 from src.config import settings
 
-request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar(
-    "request_id", default=""
-)
-user_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("user_id", default="")
 
-handlers = [logging.StreamHandler()]
+console_formatter = ExtraFieldsFormatter("%(levelname)s:\t%(message)s%(extra)s")
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(console_formatter)
+handlers = [console_handler]
 
 if settings.LOGSTASH_HOST and settings.LOGSTASH_PORT:
     logstash_handler = AsynchronousLogstashHandler(
@@ -27,6 +27,10 @@ logging.basicConfig(
 
 audit_logger = logging.getLogger("audit")
 
+request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "request_id", default=""
+)
+user_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("user_id", default="")
 
 def extract_request_id(request: Request) -> str:
     rid = request.headers.get(settings.REQUEST_ID_HEADER) or str(uuid.uuid4())

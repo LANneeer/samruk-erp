@@ -14,7 +14,7 @@ x-conf-environment: &conf-environment
   POSTGRES_DB: "${POSTGRES_DB}"
 
   LOG_LEVEL: "${LOG_LEVEL}"
-  LOGSTASH_HOST: "${LOGSTASH_HOST}"
+  LOGSTASH_HOST: "${LOGSTASH_HOST:-}"
   LOGSTASH_PORT: "${LOGSTASH_PORT}"
   REQUEST_ID_HEADER: "${REQUEST_ID_HEADER}"
   
@@ -49,7 +49,7 @@ services:
       - documents_data:${DOCUMENT_STORAGE_DIR}
 
   postgres:
-    image: postgres:12
+    image: pgvector/pgvector:pg18
     container_name: db
     environment:
       POSTGRES_DB: "$POSTGRES_DB"

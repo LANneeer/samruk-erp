@@ -12,3 +12,9 @@ class DocumentReadDTO(BaseModel):
 
 class DocumentUpdateDTO(BaseModel):
     title: str | None = None
+
+class ChunkDTO(BaseModel):
+    id: UUID
+    document_id: UUID
+    content: str
+    embedding: list[float]

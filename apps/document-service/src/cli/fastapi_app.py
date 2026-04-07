@@ -1,10 +1,9 @@
+import logging
 from typing import Annotated
 from uuid import UUID
-from logging import getLogger
 from fastapi import (
     FastAPI,
     Depends,
-    HTTPException,
     status,
     Query,
     UploadFile,
@@ -13,12 +12,18 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from utils.domains.common.exceptions import DomainError, NotFound
+from src.domains.documents.model import Document, Chunk
 from src.gateway.schemas.documents import (
     DocumentReadDTO,
     DocumentUpdateDTO,
+    ChunkDTO,
 )
 from src.dto.commands import (
     CreateDocument,
+    SaveDocumentUpload,
+    ParseDocument,
+    GenerateEmbeddings,
     UpdateDocument,
     DeleteDocument,
 )
@@ -30,14 +35,12 @@ from utils.infrastructure.metrics_middleware import MetricsMiddleware, prom_endp
 from utils.infrastructure.error import install_exception_handlers
 from src.config import settings
 from src.infrastructure.logging import get_request_id
-from src.infrastructure.storage import save_document_file, delete_document_file, get_document_file_path
+from src.infrastructure.storage import delete_document_file, get_document_file_path
 
-logger = getLogger("fastapi_app")
 
 app = FastAPI(
     title="Document Service", servers=[{"url": "/api/documents"}, {"url": "/"}]
 )
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -53,15 +56,13 @@ app.add_middleware(IdempotencyMiddleware,
     )
 if settings.PROM_ENABLED:
     app.add_middleware(MetricsMiddleware)
-install_exception_handlers(app)
-
-
+logger = logging.getLogger("app")
+install_exception_handlers(app, logger)
 
 
 async def get_uow():
     async with AsyncUnitOfWork() as uow:
         yield uow
-
 
 @app.get("/metrics")
 def metrics():
@@ -75,7 +76,7 @@ async def list_documents(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
 ):
-    items = await uow.documents.list_documents(skip=skip, limit=limit)
+    items: list[Document] = await uow.documents.list_documents(skip=skip, limit=limit)
     return [
         DocumentReadDTO(
             id=d.id,
@@ -98,6 +99,7 @@ async def create_document(
 ):
     hook = PromAuditHook()
     bus = bootstrap_async(uow, hook=hook)
+
     results = await bus.handle(
         CreateDocument(
             title=title,
@@ -105,14 +107,15 @@ async def create_document(
             author_id=author_id,
         )
     )
-    doc_id = results[0]
-    doc = await uow.documents.get_async(doc_id)
-    if not doc:
-        raise HTTPException(status_code=500, detail="Document not created")
+    doc: Document = results[0]
     
-    # wait until document is uploaded and saved to storage
-    await save_document_file(file, doc_id)
+    await bus.handle(SaveDocumentUpload(doc=doc, upload_file=file))
+
+    results = await bus.handle(ParseDocument(doc=doc))
+    chunked_content: list[str] = results[0]
     
+    await bus.handle(GenerateEmbeddings(doc=doc, chunks=chunked_content))
+
     return DocumentReadDTO(
         id=doc.id,
         title=doc.title,
@@ -128,9 +131,9 @@ async def get_document(
     document_id: UUID,
     uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
 ):
-    doc = await uow.documents.get_async(document_id)
+    doc: Document = await uow.documents.get_async(document_id)
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise NotFound("Document not found")
     return DocumentReadDTO(
         id=doc.id,
         title=doc.title,
@@ -146,13 +149,12 @@ async def download_document(
     document_id: UUID,
     uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
 ):
-    doc = await uow.documents.get_async(document_id)
+    doc: Document = await uow.documents.get_async(document_id)
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found in DB")
+        raise NotFound("Document not found in DB")
     file_path = get_document_file_path(document_id)
-    logger.info(f"Serving document file from '{file_path}'")
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Document file not found in storage")
+        raise NotFound("Document file not found in storage")
     return FileResponse(path=file_path, filename=doc.file_name, media_type='application/octet-stream')
 
 
@@ -167,9 +169,9 @@ async def update_document(
     await bus.handle(
         UpdateDocument(document_id=document_id, title=dto.title)
     )
-    doc = await uow.documents.get_async(document_id)
+    doc: Document = await uow.documents.get_async(document_id)
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise NotFound("Document not found")
     return DocumentReadDTO(
         id=doc.id,
         title=doc.title,
@@ -190,3 +192,54 @@ async def delete_document(
     await bus.handle(DeleteDocument(document_id=document_id))
     delete_document_file(document_id)
     return None
+
+
+@app.get("/documents/{document_id}/chunks", response_model=list[ChunkDTO])
+async def get_document_chunks(
+    uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
+    document_id: UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=20),
+):
+    doc: Document = await uow.documents.get_async(document_id)
+    if not doc:
+        raise NotFound("Document not found")
+    
+    chunks: list[Chunk] = await uow.documents.list_chunks(document_id, skip=skip, limit=limit)
+    if not chunks or len(chunks) == 0:
+        raise NotFound("Document chunks not found")
+
+    return [
+        ChunkDTO(
+            id=chunk.id,
+            document_id=chunk.document_id,
+            content=chunk.content,
+            embedding=chunk.embedding
+        )
+        for chunk in chunks
+    ]
+
+@app.get("/documents/{document_id}/chunks/search", response_model=list[ChunkDTO])
+
+async def document_vector_search(
+    uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
+    document_id: UUID,
+    limit: int = Query(10, ge=1, le=20),
+):
+    doc: Document = await uow.documents.get_async(document_id)
+    if not doc:
+        raise NotFound("Document not found")
+    
+    chunks: list[Chunk] = await uow.documents.vector_search(document_id, limit=limit)
+    if not chunks or len(chunks) == 0:
+        raise NotFound("Document chunks not found")
+
+    return [
+        ChunkDTO(
+            id=chunk.id,
+            document_id=chunk.document_id,
+            content=chunk.content,
+            embedding=chunk.embedding
+        )
+        for chunk in chunks
+    ]
