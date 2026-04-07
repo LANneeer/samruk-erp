@@ -60,7 +60,7 @@ class SqlAlchemyAsyncDocumentRepository(AbstractRepository[Document]):
         if len(query_embedding) != settings.EMBEDDING_SIZE:
             raise ValueError(f"Query embedding must be of size {settings.EMBEDDING_SIZE}")
         # How many candidate nodes to explore during search
-        await self.session.execute(text("SET hnsw.ef_search = 150"))
+        await self.session.execute(text(f"SET hnsw.ef_search = {settings.DOCUMENT_HNSW_EF_SEARCH}"))
         result = await self.session.execute(
             select(ChunkORM)
             .where(ChunkORM.document_id == document_id)

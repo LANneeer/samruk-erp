@@ -36,6 +36,7 @@ from utils.infrastructure.error import install_exception_handlers
 from src.config import settings
 from src.infrastructure.logging import get_request_id
 from src.infrastructure.storage import delete_document_file, get_document_file_path
+from src.infrastructure.documents.embedding import MockEmbeddingGenerator, OpenAIEmbeddingGenerator
 
 
 app = FastAPI(
@@ -220,17 +221,19 @@ async def get_document_chunks(
     ]
 
 @app.get("/documents/{document_id}/chunks/search", response_model=list[ChunkDTO])
-
 async def document_vector_search(
     uow: Annotated[AsyncUnitOfWork, Depends(get_uow)],
     document_id: UUID,
+    query: str,
     limit: int = Query(10, ge=1, le=20),
 ):
     doc: Document = await uow.documents.get_async(document_id)
     if not doc:
         raise NotFound("Document not found")
     
-    chunks: list[Chunk] = await uow.documents.vector_search(document_id, limit=limit)
+    embedder = MockEmbeddingGenerator() # TODO: replace with real embedding generator
+    query_embedding = await embedder.embed(query)
+    chunks: list[Chunk] = await uow.documents.vector_search(document_id, query_embedding=query_embedding, limit=limit)
     if not chunks or len(chunks) == 0:
         raise NotFound("Document chunks not found")
 

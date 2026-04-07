@@ -26,7 +26,8 @@ class Settings(BaseSettings):
     IDEMPOTENCY_MAX_BODY_BYTES: int = 1048576 # 1 MB
 
     DOCUMENT_STORAGE_DIR: Path = Path("data/documents")
-    DOCUMENT_CHUNK_ROWS: int = 100
+    DOCUMENT_CHUNK_ROWS: int = 30
     EMBEDDING_SIZE: int = 1536
+    DOCUMENT_HNSW_EF_SEARCH: int = 200
 
 settings = Settings()
