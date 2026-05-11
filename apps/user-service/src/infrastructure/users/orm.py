@@ -10,7 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.sql import func
-from src.infrastructure.db_async import Base
+from src.infrastructure.db_async import DeclarativeBase
 
 
 class RoleEnum(str, Enum):
@@ -18,7 +18,7 @@ class RoleEnum(str, Enum):
     admin = "admin"
 
 
-class UserORM(Base):
+class UserORM(DeclarativeBase):
     __tablename__ = "users"
     id = Column(PG_UUID, primary_key=True)
     email = Column(String(320), nullable=False, unique=True)

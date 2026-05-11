@@ -1,7 +1,14 @@
+import logging
 import hashlib
 from typing import Annotated
 from uuid import UUID
-from fastapi import FastAPI, Depends, HTTPException, status, Query, Request, Response
+from fastapi import (
+    FastAPI,
+    Depends,
+    status,
+    Query,
+    Response,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from src.gateway.schemas.users import (
     UserCreateDTO,
@@ -20,18 +27,14 @@ from src.dto.commands import (
 from src.bootstrap.async_settings import bootstrap_async
 from src.infrastructure.async_unit_of_work import AsyncUnitOfWork
 from src.infrastructure.hooks import PromAuditHook
-from src.infrastructure.middleware import (
-    IdempotencyMiddleware,
-    MetricsMiddleware,
-    prom_endpoint,
-)
-from src.cli.error import install_exception_handlers
+from utils.infrastructure.idempotency_middleware import IdempotencyMiddleware
+from utils.infrastructure.metrics_middleware import MetricsMiddleware, prom_endpoint
+from utils.infrastructure.error import install_exception_handlers
+from utils.domains.common.exceptions import DomainError, NotFound
 from src.config import settings
+from src.infrastructure.logging import get_request_id
 
-app = FastAPI(
-    title="User Service (async)", servers=[{"url": "/api/users"}, {"url": "/"}]
-)
-
+app = FastAPI(title="User Service", servers=[{"url": "/api/users"}, {"url": "/"}])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,10 +42,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(IdempotencyMiddleware)
+app.add_middleware(
+    IdempotencyMiddleware,
+    redis_url=settings.REDIS_URL,
+    ttl_sec=settings.IDEMPOTENCY_TTL_SEC,
+    max_body_bytes=settings.IDEMPOTENCY_MAX_BODY_BYTES,
+    get_request_id=get_request_id,
+)
 if settings.PROM_ENABLED:
     app.add_middleware(MetricsMiddleware)
-install_exception_handlers(app)
+logger = logging.getLogger("app")
+install_exception_handlers(app, logger)
 
 
 async def get_uow():
@@ -98,7 +108,7 @@ async def register_user(
     user_id = results[0]
     user = await uow.users.get_async(user_id)
     if not user:
-        raise HTTPException(status_code=500, detail="User not persisted")
+        raise DomainError("User not persisted")
     return UserReadDTO(
         id=user.id,
         email=user.email,
@@ -116,7 +126,7 @@ async def get_user(
 ):
     user = await uow.users.get_async(user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise NotFound("User not found")
     return UserReadDTO(
         id=user.id,
         email=user.email,
@@ -142,7 +152,7 @@ async def update_user(
     )
     user = await uow.users.get_async(user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise NotFound("User not found")
     return UserReadDTO(
         id=user.id,
         email=user.email,

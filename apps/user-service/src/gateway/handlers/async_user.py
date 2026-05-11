@@ -1,9 +1,25 @@
 from typing import Any, Protocol
 from uuid import UUID
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
-from src.domains.users.model import User, Role, UserRegistered, UserProfileUpdated, UserPasswordChanged, UserActivated, UserDeactivated, UserRoleChanged
-from src.dto.commands import RegisterUser, UpdateUserProfile, ChangeUserPassword, ActivateUser, DeactivateUser, PromoteToAdmin
-from src.domains.common.exceptions import DuplicateEmail, DuplicateUsername, NotFound, Conflict
+from src.domains.users.model import User, Role
+from utils.domains.common.exceptions import DuplicateEmail, DuplicateUsername, NotFound, Conflict
+from src.dto.commands import (
+    RegisterUser,
+    UpdateUserProfile,
+    ChangeUserPassword,
+    ActivateUser,
+    DeactivateUser,
+    PromoteToAdmin,
+)
+from src.dto.commands import (
+    UserRegistered,
+    UserProfileUpdated,
+    UserPasswordChanged,
+    UserActivated,
+    UserDeactivated,
+    UserRoleChanged,
+)
+
 
 class Notifier(Protocol):
     async def send(self, *, channel: str, message: str) -> None: ...
@@ -69,7 +85,25 @@ async def handle_promote_to_admin(cmd: PromoteToAdmin, uow: AsyncAbstractUnitOfW
     await uow.commit()
 
 async def on_user_registered(evt: UserRegistered, notifier: Notifier | None = None, publisher: Publisher | None = None) -> None:
-    if notifier:
-        await notifier.send(channel="telegram", message=f"New user registered: {evt.username} ({evt.email})")
     if publisher:
         await publisher.publish(topic="user.registered", payload={"user_id": str(evt.user_id), "email": evt.email})
+
+async def on_user_profile_updated(evt: UserProfileUpdated, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.profile_updated", payload={"user_id": str(evt.user_id), "changes": evt.changes})
+
+async def on_user_password_changed(evt: UserPasswordChanged, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.password_changed", payload={"user_id": str(evt.user_id)})
+
+async def on_user_activated(evt: UserActivated, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.activated", payload={"user_id": str(evt.user_id)})
+
+async def on_user_deactivated(evt: UserDeactivated, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.deactivated", payload={"user_id": str(evt.user_id)})
+
+async def on_user_role_changed(evt: UserRoleChanged, publisher: Publisher | None = None) -> None:
+    if publisher:
+        await publisher.publish(topic="user.role_changed", payload={"user_id": str(evt.user_id), "role": evt.new_role})

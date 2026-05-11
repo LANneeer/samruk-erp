@@ -5,14 +5,10 @@ from typing import (
     Callable,
     Deque,
     Dict,
-    Iterable,
     List,
     Mapping,
-    MutableMapping,
     Sequence,
-    Tuple,
     Type,
-    Union,
 )
 
 from .message import MessageType, Command, Event

@@ -1,11 +1,12 @@
-version: "3.9"
-
 volumes:
   postgres_data: {}
+  documents_data: {}
 
 x-conf-environment: &conf-environment
   APP_NAME: "${APP_NAME}"
   DEV: "${DEV}"
+  PROM_ENABLED: "${PROM_ENABLED}"
+
   DATABASE_URL: "${DATABASE_URL}"
   POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
   POSTGRES_USER: "${POSTGRES_USER}"
@@ -13,11 +14,13 @@ x-conf-environment: &conf-environment
   POSTGRES_DB: "${POSTGRES_DB}"
 
   LOG_LEVEL: "${LOG_LEVEL}"
-
+  LOGSTASH_HOST: "${LOGSTASH_HOST:-}"
+  LOGSTASH_PORT: "${LOGSTASH_PORT}"
+  REQUEST_ID_HEADER: "${REQUEST_ID_HEADER}"
+  
   REDIS_URL: "${REDIS_URL}"
   IDEMPOTENCY_TTL_SEC: "${IDEMPOTENCY_TTL_SEC}"
-
-  USER_SERVICE_URL: "${USER_SERVICE_URL}"
+  IDEMPOTENCY_MAX_BODY_BYTES: "${IDEMPOTENCY_MAX_BODY_BYTES}"
 
 services:
   user-service:
@@ -28,10 +31,25 @@ services:
     ports:
       - "8001:8001"
     volumes:
+      - ./packages/:/app/packages
       - ./apps/user-service/src:/app/apps/user-service/src
 
+  document-service:
+    build:
+      context: .
+      dockerfile: apps/document-service/Dockerfile
+    environment:
+      <<: *conf-environment
+      DOCUMENT_STORAGE_DIR: "${DOCUMENT_STORAGE_DIR}"
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./packages/:/app/packages
+      - ./apps/document-service/src:/app/apps/document-service/src
+      - documents_data:${DOCUMENT_STORAGE_DIR}
+
   postgres:
-    image: postgres:12
+    image: pgvector/pgvector:pg18
     container_name: db
     environment:
       POSTGRES_DB: "$POSTGRES_DB"

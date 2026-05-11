@@ -1,18 +1,17 @@
 from logging.config import fileConfig
 
 from sqlalchemy import pool
-from sqlalchemy.engine import url
 from sqlalchemy.ext.asyncio import async_engine_from_config, AsyncEngine
 from alembic import context
 
-from src.infrastructure.users.orm import Base
+from src.infrastructure.users.orm import DeclarativeBase
 from src.config import settings
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = Base.metadata
+target_metadata = DeclarativeBase.metadata
 
 
 def get_url() -> str:
