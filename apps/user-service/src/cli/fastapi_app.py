@@ -34,9 +34,7 @@ from utils.domains.common.exceptions import DomainError, NotFound
 from src.config import settings
 from src.infrastructure.logging import get_request_id
 
-app = FastAPI(
-    title="User Service", servers=[{"url": "/api/users"}, {"url": "/"}]
-)
+app = FastAPI(title="User Service", servers=[{"url": "/api/users"}, {"url": "/"}])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,12 +42,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(IdempotencyMiddleware, 
-        redis_url=settings.REDIS_URL, 
-        ttl_sec=settings.IDEMPOTENCY_TTL_SEC, 
-        max_body_bytes=settings.IDEMPOTENCY_MAX_BODY_BYTES, 
-        get_request_id=get_request_id,
-    )
+app.add_middleware(
+    IdempotencyMiddleware,
+    redis_url=settings.REDIS_URL,
+    ttl_sec=settings.IDEMPOTENCY_TTL_SEC,
+    max_body_bytes=settings.IDEMPOTENCY_MAX_BODY_BYTES,
+    get_request_id=get_request_id,
+)
 if settings.PROM_ENABLED:
     app.add_middleware(MetricsMiddleware)
 logger = logging.getLogger("app")
