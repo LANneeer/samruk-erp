@@ -3,8 +3,31 @@ global:
 
 scrape_configs:
   - job_name: user-service
+    metrics_path: /metrics
     static_configs:
       - targets: ["user-service:8001"]
         labels:
           service: "user-service"
-    metrics_path: api/users/metrics
+          layer: "application"
+
+  - job_name: document-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["document-service:8002"]
+        labels:
+          service: "document-service"
+          layer: "application"
+
+  - job_name: postgres-exporter
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          service: "postgres"
+          layer: "infrastructure"
+
+  - job_name: redis-exporter
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          service: "redis"
+          layer: "infrastructure"

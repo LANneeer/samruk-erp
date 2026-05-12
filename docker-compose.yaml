@@ -1,6 +1,8 @@
 volumes:
   postgres_data: {}
   documents_data: {}
+  grafana_data: {}
+  loki_data: {}
 
 x-conf-environment: &conf-environment
   APP_NAME: "${APP_NAME}"
@@ -17,7 +19,7 @@ x-conf-environment: &conf-environment
   LOGSTASH_HOST: "${LOGSTASH_HOST:-}"
   LOGSTASH_PORT: "${LOGSTASH_PORT}"
   REQUEST_ID_HEADER: "${REQUEST_ID_HEADER}"
-  
+
   REDIS_URL: "${REDIS_URL}"
   IDEMPOTENCY_TTL_SEC: "${IDEMPOTENCY_TTL_SEC}"
   IDEMPOTENCY_MAX_BODY_BYTES: "${IDEMPOTENCY_MAX_BODY_BYTES}"
@@ -33,6 +35,9 @@ services:
     volumes:
       - ./packages/:/app/packages
       - ./apps/user-service/src:/app/apps/user-service/src
+    depends_on:
+      - postgres
+      - redis
 
   document-service:
     build:
@@ -47,6 +52,9 @@ services:
       - ./packages/:/app/packages
       - ./apps/document-service/src:/app/apps/document-service/src
       - documents_data:${DOCUMENT_STORAGE_DIR}
+    depends_on:
+      - postgres
+      - redis
 
   postgres:
     image: pgvector/pgvector:pg18
@@ -65,3 +73,103 @@ services:
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.67.0
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+    volumes:
+      - ./observability/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - user-service
+      - document-service
+      - postgres-exporter
+      - redis-exporter
+
+  loki:
+    image: grafana/loki:3.1.1
+    command: ["-config.file=/etc/loki/config.yml"]
+    volumes:
+      - ./observability/loki/loki.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:3.1.1
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./observability/promtail/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+
+  mock-e2e:
+    build:
+      context: .
+      dockerfile: tests/mock-e2e/Dockerfile
+    depends_on:
+      - user-service
+      - document-service
+      - postgres
+      - redis
+      - postgres-exporter
+      - redis-exporter
+      - prometheus
+      - loki
+      - promtail
+      - grafana
+    restart: "no"
+
+  runtime-tests:
+    build:
+      context: .
+      dockerfile: tests/runtime/Dockerfile
+    depends_on:
+      - mock-e2e
+      - user-service
+      - document-service
+      - postgres
+      - redis
+      - postgres-exporter
+      - redis-exporter
+      - prometheus
+      - loki
+      - promtail
+      - grafana
+    restart: "no"
