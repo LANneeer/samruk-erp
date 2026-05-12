@@ -8,7 +8,7 @@ from utils.infrastructure.logging import ExtraFieldsFormatter
 from src.config import settings
 
 
-console_formatter = ExtraFieldsFormatter("%(levelname)s:\t%(message)s%(extra)s")
+console_formatter = ExtraFieldsFormatter("%(levelname)s:\t%(message)s%(console_extra)s")
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
 handlers = [console_handler]

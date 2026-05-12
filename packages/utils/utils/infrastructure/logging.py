@@ -2,8 +2,10 @@ import logging
 
 # we put most info in 'extra' argument of log functions for logstash, 
 # but for console logger by default doesn't show 'extra' fields, 
-# so we create a custom formatter to extract all additional fields to 'extra' 
-# and access it in format string as %(extra)s
+# so we create a custom formatter to extract all additional fields to a
+# console-only attribute and access it in format string as %(console_extra)s.
+# Using the name "extra" here breaks logstash_async because that formatter
+# expects its own structured "extra" object.
 class ExtraFieldsFormatter(logging.Formatter):
     def format(self, record):
         # standard LogRecord attributes
@@ -18,5 +20,5 @@ class ExtraFieldsFormatter(logging.Formatter):
             if k not in standard_attrs
         }
 
-        record.extra = ''.join(extra_lines)  # attach for formatter
+        record.console_extra = ''.join(extra_lines)  # attach for console formatter
         return super().format(record)
