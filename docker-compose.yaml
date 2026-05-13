@@ -53,7 +53,6 @@ services:
       - ./apps/document-gateway/src:/app/apps/document-gateway/src
       - documents_data:${DOCUMENT_STORAGE_DIR}
     depends_on:
-      - postgres
       - redis
 
   document-worker:
@@ -69,7 +68,8 @@ services:
       - ./apps/document-worker/src:/app/apps/document-worker/src
       - documents_data:${DOCUMENT_STORAGE_DIR}
     depends_on:
-      - document-gateway
+      - redis
+      - postgres
 
   postgres:
     image: pgvector/pgvector:pg18

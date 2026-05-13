@@ -4,13 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from patterns.repository import AbstractRepository
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
 from src.infrastructure.db_async import AsyncSessionLocal
-from src.repository.sqlalchemy_async import SqlAlchemyAsyncUserRepository
+from repository.async_document_repository import SqlAlchemyAsyncDocumentRepository
 from utils.domains.common.exceptions import DatabaseConflict
 
-
-async def get_uow():
-    async with AsyncUnitOfWork() as uow:
-        yield uow
 
 class AsyncUnitOfWork(AsyncAbstractUnitOfWork):
     def __init__(self, session_factory=AsyncSessionLocal) -> None:
@@ -20,8 +16,8 @@ class AsyncUnitOfWork(AsyncAbstractUnitOfWork):
 
     async def __aenter__(self) -> "AsyncUnitOfWork":
         self.session = self._session_factory()
-        self.users = SqlAlchemyAsyncUserRepository(self.session)
-        self.repositories: Tuple[AbstractRepository, ...] = (self.users,)
+        self.documents = SqlAlchemyAsyncDocumentRepository(self.session)
+        self.repositories: Tuple[AbstractRepository, ...] = (self.documents,)
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:

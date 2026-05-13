@@ -1,3 +1,6 @@
+#############################################################################
+#                           Stage 1: build wheels                           #
+#############################################################################
 FROM python:3.12-slim AS builder
 
 ENV POETRY_VERSION=2.1.1 \
@@ -24,8 +27,13 @@ RUN POETRY_VIRTUALENVS_IN_PROJECT=true \
   poetry install --no-root --only main -n
 
 COPY apps/document-worker/src ./src
+COPY apps/document-worker/alembic ./alembic
+COPY apps/document-worker/alembic.ini ./alembic.ini
 COPY apps/document-worker/README.md ./README.md
 
+#############################################################################
+#                             Stage 2: run app                              #
+#############################################################################
 FROM python:3.12-slim AS worker
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -45,6 +53,8 @@ WORKDIR /app/apps/document-worker
 
 COPY --from=builder /app/apps/document-worker/.venv ./.venv
 COPY --from=builder /app/apps/document-worker/src ./src
+COPY --from=builder /app/apps/document-worker/alembic ./alembic
+COPY --from=builder /app/apps/document-worker/alembic.ini ./alembic.ini
 COPY --from=builder /app/apps/document-worker/README.md ./README.md
 
 ENV PATH="/app/apps/document-worker/.venv/bin:$PATH"
@@ -53,9 +63,9 @@ EXPOSE 8003
 HEALTHCHECK --interval=60s --timeout=3s --retries=3 \
     CMD curl -fsS http://localhost:8003/docs >/dev/null || exit 1
 
-CMD uvicorn src.cli.fastapi_app:app \
-        --host 0.0.0.0 \
-        --port 8003 \
-        --reload \
-        --reload-dir /app/apps/document-worker/src \
-        --reload-dir /app/packages
+RUN useradd -ms /bin/bash app_user
+RUN chown -R app_user:app_user /app
+USER app_user
+
+CMD alembic upgrade head && \
+    celery -A src.celery_app:celery_app worker --loglevel=info

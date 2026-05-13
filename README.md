@@ -1,4 +1,5 @@
 # Diploma Project: Service-Oriented ERP Platform Prototype
+#TODO: update readme
 
 ## Abstract
 
@@ -109,7 +110,7 @@ The User Service manages user accounts and core account operations. Its API is i
 
 ### Architectural characteristics
 
-- FastAPI API layer in `src/cli/fastapi_app.py`
+- FastAPI API layer in `src/fastapi_app.py`
 - command/event bootstrap in `src/bootstrap/async_settings.py`
 - domain aggregate `User` in `src/domains/users/model.py`
 - asynchronous command handlers in `src/gateway/handlers/async_user.py`
@@ -453,7 +454,7 @@ Each service also contains its own Python project files and Alembic setup. A typ
 ```bash
 poetry install
 poetry run alembic upgrade head
-poetry run uvicorn src.cli.fastapi_app:app --reload --port <service-port>
+poetry run uvicorn src.fastapi_app:app --reload --port <service-port>
 ```
 
 Default ports in the current architecture:

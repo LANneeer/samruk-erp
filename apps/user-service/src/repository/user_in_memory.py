@@ -1,6 +1,5 @@
 from typing import Optional, Dict
 from uuid import UUID
-
 from patterns.repository import AbstractRepository
 from src.domains.users.model import User
 

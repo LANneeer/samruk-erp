@@ -1,5 +1,4 @@
 # document-gateway
-# TODO: update readme
 Сервис документов: создание, обновление, удаление документов.
 
 ## Запуск
@@ -9,27 +8,12 @@
 3. Запустить:
 
 ```bash
+pyenv install 3.12
 poetry install
-poetry run alembic upgrade head 
-poetry run uvicorn src.cli.fastapi_app:app --reload --port 8002
+poetry run uvicorn src.fastapi_app:app --port 8002
 ```
 
 API доступен по адресу: <http://localhost:8002>
-
-## Структура
-
-## Структура
-
-```text
-document-gateway
-├── src/
-│   ├── domains/          # модель Document, интерфейсы, сервис
-│   ├── dto/              # команды и события
-│   ├── gateway/          # схемы для FastAPI
-│   ├── infrastructure/   # ORM, UoW, middleware
-│   └── cli/              # fastapi_app и demo_app
-└── README.md
-```
 
 ## Возможности
 

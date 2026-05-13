@@ -1,3 +1,6 @@
+#############################################################################
+#                           Stage 1: build wheels                           #
+#############################################################################
 FROM python:3.12-slim AS builder
 
 ENV POETRY_VERSION=2.1.1 \
@@ -28,6 +31,9 @@ COPY apps/user-service/alembic ./alembic
 COPY apps/user-service/alembic.ini ./alembic.ini
 COPY apps/user-service/README.md ./README.md
 
+#############################################################################
+#                             Stage 2: run app                              #
+#############################################################################
 FROM python:3.12-slim AS api
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -57,8 +63,12 @@ EXPOSE 8001
 HEALTHCHECK --interval=60s --timeout=3s --retries=3 \
     CMD curl -fsS http://localhost:8001/docs >/dev/null || exit 1
 
+RUN useradd -ms /bin/bash app_user
+RUN chown -R app_user:app_user /app
+USER app_user
+
 CMD alembic upgrade head && \
-    uvicorn src.cli.fastapi_app:app \
+    uvicorn src.fastapi_app:app \
         --host 0.0.0.0 \
         --port 8001 \
         --reload \

@@ -4,8 +4,7 @@ from typing import Any
 from patterns.observability import ObservabilityHook
 from patterns.message import Command, Event
 from utils.infrastructure.logging import audit_log, get_request_id
-from utils.infrastructure.logging import logging
-
+import logging
 
 log = logging.getLogger("obs")
 

@@ -1,3 +1,6 @@
+#############################################################################
+#                           Stage 1: build wheels                           #
+#############################################################################
 FROM python:3.12-slim AS builder
 
 ENV POETRY_VERSION=2.1.1 \
@@ -24,10 +27,11 @@ RUN POETRY_VIRTUALENVS_IN_PROJECT=true \
   poetry install --no-root --only main -n
 
 COPY apps/document-gateway/src ./src
-COPY apps/document-gateway/alembic ./alembic
-COPY apps/document-gateway/alembic.ini ./alembic.ini
 COPY apps/document-gateway/README.md ./README.md
 
+#############################################################################
+#                             Stage 2: run app                              #
+#############################################################################
 FROM python:3.12-slim AS api
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -47,8 +51,6 @@ WORKDIR /app/apps/document-gateway
 
 COPY --from=builder /app/apps/document-gateway/.venv ./.venv
 COPY --from=builder /app/apps/document-gateway/src ./src
-COPY --from=builder /app/apps/document-gateway/alembic ./alembic
-COPY --from=builder /app/apps/document-gateway/alembic.ini ./alembic.ini
 COPY --from=builder /app/apps/document-gateway/README.md ./README.md
 
 ENV PATH="/app/apps/document-gateway/.venv/bin:$PATH"
@@ -57,8 +59,11 @@ EXPOSE 8002
 HEALTHCHECK --interval=60s --timeout=3s --retries=3 \
     CMD curl -fsS http://localhost:8002/docs >/dev/null || exit 1
 
-CMD alembic upgrade head && \
-    uvicorn src.cli.fastapi_app:app \
+RUN useradd -ms /bin/bash app_user
+RUN chown -R app_user:app_user /app
+USER app_user
+
+CMD uvicorn src.fastapi_app:app \
         --host 0.0.0.0 \
         --port 8002 \
         --reload \

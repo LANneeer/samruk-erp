@@ -1,17 +1,9 @@
 from fastapi import FastAPI, status, Request, HTTPException
 from fastapi.responses import JSONResponse
 import logging
-import traceback
-
 from utils.domains.common import exceptions as ex
+from utils.infrastructure.logging import log_exception
 
-def log_exception(logger: logging.Logger, exc: Exception, limit: int = 10) -> None:
-    # get stack trace
-    tb = traceback.format_exception(type(exc), exc, exc.__traceback__, chain=False)
-    # limit to n frames
-    trace_str = "".join(tb[-limit:])
-    # print to log
-    logger.error("Unhandled exception (truncated)\n" + trace_str)
 
 def install_exception_handlers(app: FastAPI, logger: logging.Logger) -> None:
     # disable uvicorn's default error logging to avoid duplicate logs, we'll handle logging ourselves

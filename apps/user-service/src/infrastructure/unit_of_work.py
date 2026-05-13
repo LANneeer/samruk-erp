@@ -1,5 +1,4 @@
 from typing import Tuple
-
 from patterns.unit_of_work import AbstractUnitOfWork
 from patterns.repository import AbstractRepository
 from src.repository.user_in_memory import InMemoryUserRepository
