@@ -1,5 +1,5 @@
-# document-service
-
+# document-gateway
+# TODO: update readme
 Сервис документов: создание, обновление, удаление документов.
 
 ## Запуск
@@ -21,7 +21,7 @@ API доступен по адресу: <http://localhost:8002>
 ## Структура
 
 ```text
-document-service
+document-gateway
 ├── src/
 │   ├── domains/          # модель Document, интерфейсы, сервис
 │   ├── dto/              # команды и события

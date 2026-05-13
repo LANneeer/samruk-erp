@@ -39,10 +39,10 @@ services:
       - postgres
       - redis
 
-  document-service:
+  document-gateway:
     build:
       context: .
-      dockerfile: apps/document-service/Dockerfile
+      dockerfile: apps/document-gateway/Dockerfile
     environment:
       <<: *conf-environment
       DOCUMENT_STORAGE_DIR: "${DOCUMENT_STORAGE_DIR}"
@@ -50,11 +50,26 @@ services:
       - "8002:8002"
     volumes:
       - ./packages/:/app/packages
-      - ./apps/document-service/src:/app/apps/document-service/src
+      - ./apps/document-gateway/src:/app/apps/document-gateway/src
       - documents_data:${DOCUMENT_STORAGE_DIR}
     depends_on:
       - postgres
       - redis
+
+  document-worker:
+    build:
+      context: .
+      dockerfile: apps/document-worker/Dockerfile
+    environment:
+      <<: *conf-environment
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./packages/:/app/packages
+      - ./apps/document-worker/src:/app/apps/document-worker/src
+      - documents_data:${DOCUMENT_STORAGE_DIR}
+    depends_on:
+      - document-gateway
 
   postgres:
     image: pgvector/pgvector:pg18
@@ -102,7 +117,7 @@ services:
       - "9090:9090"
     depends_on:
       - user-service
-      - document-service
+      - document-gateway
       - postgres-exporter
       - redis-exporter
 
@@ -145,7 +160,8 @@ services:
       dockerfile: tests/mock-e2e/Dockerfile
     depends_on:
       - user-service
-      - document-service
+      - document-gateway
+      - document-worker
       - postgres
       - redis
       - postgres-exporter
@@ -163,7 +179,8 @@ services:
     depends_on:
       - mock-e2e
       - user-service
-      - document-service
+      - document-gateway
+      - document-worker
       - postgres
       - redis
       - postgres-exporter

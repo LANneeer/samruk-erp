@@ -6,7 +6,7 @@ This repository contains a diploma-scale prototype of a service-oriented enterpr
 The system is organized as a set of independent backend services supported by shared internal libraries, a relational database, a cache layer, and an observability foundation. The current implementation focuses on two bounded domains:
 
 - **User Service** — lifecycle management of user accounts and roles.
-- **Document Service** — upload, storage, parsing, chunking, and vector-oriented retrieval of tabular documents.
+- **Document Gateway** — upload, storage, parsing, chunking, and vector-oriented retrieval of tabular documents.
 
 From an architectural perspective, the project demonstrates the practical application of:
 
@@ -64,7 +64,7 @@ The repository is divided into three main layers:
 .
 ├── apps/
 │   ├── user-service/
-│   └── document-service/
+│   └── document-gateway/
 ├── packages/
 │   ├── patterns/
 │   └── utils/
@@ -136,11 +136,11 @@ The aggregate emits domain events such as:
 
 These events are consumed by the internal message bus and can be routed to infrastructure-side publishers or notifiers.
 
-### 4.2 Document Service
+### 4.2 Document Gateway
 
-**Location:** `apps/document-service`
+**Location:** `apps/document-gateway`
 
-The Document Service manages uploaded business documents and prepares them for vector-style retrieval.
+The Document Gateway manages uploaded business documents and prepares them for vector-style retrieval.
 
 ### Functional scope
 
@@ -250,7 +250,7 @@ This separation keeps domain logic independent from FastAPI and database details
 ### 7.1 Relational storage
 
 The project uses **PostgreSQL** as the primary data store.  
-The Document Service specifically uses the **pgvector** extension through the `pgvector/pgvector:pg18` image.
+The Document Gateway specifically uses the **pgvector** extension through the `pgvector/pgvector:pg18` image.
 
 ### 7.2 User data
 
@@ -258,7 +258,7 @@ The User Service persists user records through asynchronous SQLAlchemy-based inf
 
 ### 7.3 Document data
 
-The Document Service persists:
+The Document Gateway persists:
 
 - document metadata in the `documents` table;
 - vectorized chunks in the `chunks` table;
@@ -305,7 +305,7 @@ The repository includes a dedicated `observability/` directory with configuratio
 
 These files define the intended operational stack of the platform. At present:
 
-- Docker Compose directly launches `user-service`, `document-service`, `postgres`, and `redis`;
+- Docker Compose directly launches `user-service`, `document-gateway`, `postgres`, and `redis`;
 - observability configuration files are present in the repository;
 - full runtime wiring of Grafana / Elasticsearch / Logstash services is a planned operational extension rather than a fully composed local stack.
 
@@ -325,7 +325,7 @@ This test suite validates the core user-management slice from domain logic to HT
 
 ### Current limitation
 
-At the time reflected by this repository state, equivalent automated test coverage is not yet present for the Document Service. This should be treated as one of the next engineering priorities.
+At the time reflected by this repository state, equivalent automated test coverage is not yet present for the Document Gateway. This should be treated as one of the next engineering priorities.
 
 ---
 
@@ -338,7 +338,7 @@ The local runtime is defined in `docker-compose.yaml`.
 ### Services started by Compose
 
 - `user-service` on port **8001**
-- `document-service` on port **8002**
+- `document-gateway` on port **8002**
 - `postgres` on port **5432**
 - `redis` on port **6379**
 
@@ -355,7 +355,7 @@ The root `example.env` file defines the shared variables used by the local envir
 - database connection settings;
 - Redis configuration;
 - logging and request ID configuration;
-- document-service storage and embedding parameters.
+- document-gateway storage and embedding parameters.
 
 ---
 
@@ -404,7 +404,7 @@ The root `example.env` file defines the shared variables used by the local envir
 
 Implements user management as an asynchronous service with domain events and tested business flows.
 
-### `apps/document-service`
+### `apps/document-gateway`
 
 Implements document ingestion and retrieval preparation with local file storage and pgvector-backed chunk search.
 
@@ -444,7 +444,7 @@ cp example.env .env
 docker compose up --build
 ```
 
-This starts PostgreSQL, Redis, User Service, and Document Service.
+This starts PostgreSQL, Redis, User Service, and Document Gateway.
 
 ### 14.3 Service-level manual startup
 
@@ -459,7 +459,7 @@ poetry run uvicorn src.cli.fastapi_app:app --reload --port <service-port>
 Default ports in the current architecture:
 
 - User Service — `8001`
-- Document Service — `8002`
+- Document Gateway — `8002`
 
 ---
 
@@ -479,7 +479,7 @@ Representative endpoints:
 - `POST /users/{user_id}/promote`
 - `GET /metrics`
 
-### 15.2 Document Service API
+### 15.2 Document Gateway API
 
 Representative endpoints:
 
@@ -516,7 +516,7 @@ These features make the project suitable as both a diploma artifact and a practi
 The current state of the project also includes known limitations:
 
 - document embeddings use a mock generator in the active flow;
-- document-service automated tests are not yet present at the same level as user-service tests;
+- document-gateway automated tests are not yet present at the same level as user-service tests;
 - the Compose stack does not yet start the full observability platform;
 - some event-driven integrations are scaffolded through protocols and hooks, but external brokers/providers are still future work;
 - API gateway / ingress composition is not yet represented as a separate runtime component.
@@ -530,7 +530,7 @@ These limitations are not defects in the architectural concept; rather, they def
 Recommended next steps for the project are:
 
 1. activate real embedding generation with secure provider configuration;
-2. add document-service unit, integration, and API tests;
+2. add document-gateway unit, integration, and API tests;
 3. extend Compose with Grafana, Prometheus, Logstash, and Elasticsearch containers;
 4. introduce an API gateway or reverse proxy for unified routing;
 5. connect domain events to a real broker for cross-service communication;

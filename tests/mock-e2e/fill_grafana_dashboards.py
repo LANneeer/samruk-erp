@@ -12,7 +12,7 @@ from typing import Any
 
 
 USER_SERVICE_URL = "http://user-service:8001"
-DOCUMENT_SERVICE_URL = "http://document-service:8002"
+DOCUMENT_GATEWAY_URL = "http://document-gateway:8002"
 PROMETHEUS_URL = "http://prometheus:9090"
 GRAFANA_URL = "http://grafana:3000"
 HTTP_TIMEOUT_SECONDS = 10
@@ -146,7 +146,7 @@ def seed_user_service(iteration: int) -> None:
     )
 
 
-def seed_document_service(iteration: int) -> None:
+def seed_document_gateway(iteration: int) -> None:
     author_id = str(uuid.uuid4())
     csv_buffer = io.StringIO()
     writer = csv.writer(csv_buffer)
@@ -169,7 +169,7 @@ def seed_document_service(iteration: int) -> None:
     create_query = urllib.parse.urlencode({"title": title, "author_id": author_id})
 
     status, raw = request(
-        f"{DOCUMENT_SERVICE_URL}/documents?{create_query}",
+        f"{DOCUMENT_GATEWAY_URL}/documents?{create_query}",
         method="POST",
         headers={"Content-Type": content_type},
         data=body,
@@ -180,21 +180,21 @@ def seed_document_service(iteration: int) -> None:
     created = json.loads(raw.decode("utf-8"))
     document_id = created["id"]
 
-    request_json(f"{DOCUMENT_SERVICE_URL}/documents")
-    request_json(f"{DOCUMENT_SERVICE_URL}/documents/{document_id}")
+    request_json(f"{DOCUMENT_GATEWAY_URL}/documents")
+    request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}")
     request_json(
-        f"{DOCUMENT_SERVICE_URL}/documents/{document_id}",
+        f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}",
         method="PATCH",
         payload={"title": f"Updated Seed Report {iteration}"},
     )
-    request_json(f"{DOCUMENT_SERVICE_URL}/documents/{document_id}/chunks")
+    request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/chunks")
 
     for query_text in ("Alice", "Bob", f"iteration {iteration}"):
         query = urllib.parse.urlencode({"query": query_text, "limit": 5})
-        request_json(f"{DOCUMENT_SERVICE_URL}/documents/{document_id}/chunks/search?{query}")
+        request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/chunks/search?{query}")
 
-    request(f"{DOCUMENT_SERVICE_URL}/documents/{document_id}/download")
-    request(f"{DOCUMENT_SERVICE_URL}/metrics")
+    request(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/download")
+    request(f"{DOCUMENT_GATEWAY_URL}/metrics")
 
 
 def touch_observability() -> None:
@@ -206,8 +206,8 @@ def touch_observability() -> None:
 def main() -> None:
     log("waiting for user-service")
     wait_for_http_ok(f"{USER_SERVICE_URL}/docs")
-    log("waiting for document-service")
-    wait_for_http_ok(f"{DOCUMENT_SERVICE_URL}/docs")
+    log("waiting for document-gateway")
+    wait_for_http_ok(f"{DOCUMENT_GATEWAY_URL}/docs")
     log("waiting for prometheus")
     wait_for_http_ok(f"{PROMETHEUS_URL}/-/ready")
     log("waiting for grafana")
@@ -216,7 +216,7 @@ def main() -> None:
     for iteration in range(1, SEED_ITERATIONS + 1):
         log(f"seeding iteration {iteration}/{SEED_ITERATIONS}")
         seed_user_service(iteration)
-        seed_document_service(iteration)
+        seed_document_gateway(iteration)
         touch_observability()
         time.sleep(1)
 

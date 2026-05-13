@@ -10,12 +10,12 @@ scrape_configs:
           service: "user-service"
           layer: "application"
 
-  - job_name: document-service
+  - job_name: document-gateway
     metrics_path: /metrics
     static_configs:
-      - targets: ["document-service:8002"]
+      - targets: ["document-gateway:8002"]
         labels:
-          service: "document-service"
+          service: "document-gateway"
           layer: "application"
 
   - job_name: postgres-exporter

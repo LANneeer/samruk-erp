@@ -6,8 +6,8 @@ class Settings(BaseSettings):
         # load .env file from service root directory
         env_file = Path(__file__).resolve().parent.parent / ".env"
     
-    APP_NAME: str = "documents-service"
-    SERVICE_NAME: str = "document-service"
+    APP_NAME: str = "document-gateway"
+    SERVICE_NAME: str = "document-gateway"
     PROM_ENABLED: bool = True
 
     DATABASE_URL: str # required

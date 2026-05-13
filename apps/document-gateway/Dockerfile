@@ -16,17 +16,17 @@ WORKDIR /app
 
 COPY packages ./packages
 
-COPY apps/document-service/pyproject.toml apps/document-service/poetry.lock ./apps/document-service/
+COPY apps/document-gateway/pyproject.toml apps/document-gateway/poetry.lock ./apps/document-gateway/
 
-WORKDIR /app/apps/document-service
+WORKDIR /app/apps/document-gateway
 
 RUN POETRY_VIRTUALENVS_IN_PROJECT=true \
   poetry install --no-root --only main -n
 
-COPY apps/document-service/src ./src
-COPY apps/document-service/alembic ./alembic
-COPY apps/document-service/alembic.ini ./alembic.ini
-COPY apps/document-service/README.md ./README.md
+COPY apps/document-gateway/src ./src
+COPY apps/document-gateway/alembic ./alembic
+COPY apps/document-gateway/alembic.ini ./alembic.ini
+COPY apps/document-gateway/README.md ./README.md
 
 FROM python:3.12-slim AS api
 
@@ -41,22 +41,22 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/apps/document-service/pyproject.toml /app/apps/document-service/poetry.lock ./apps/document-service/
+COPY --from=builder /app/apps/document-gateway/pyproject.toml /app/apps/document-gateway/poetry.lock ./apps/document-gateway/
 
-WORKDIR /app/apps/document-service
+WORKDIR /app/apps/document-gateway
 
-COPY --from=builder /app/apps/document-service/.venv ./.venv
-COPY --from=builder /app/apps/document-service/src ./src
-COPY --from=builder /app/apps/document-service/alembic ./alembic
-COPY --from=builder /app/apps/document-service/alembic.ini ./alembic.ini
-COPY --from=builder /app/apps/document-service/README.md ./README.md
+COPY --from=builder /app/apps/document-gateway/.venv ./.venv
+COPY --from=builder /app/apps/document-gateway/src ./src
+COPY --from=builder /app/apps/document-gateway/alembic ./alembic
+COPY --from=builder /app/apps/document-gateway/alembic.ini ./alembic.ini
+COPY --from=builder /app/apps/document-gateway/README.md ./README.md
 
-ENV PATH="/app/apps/document-service/.venv/bin:$PATH"
+ENV PATH="/app/apps/document-gateway/.venv/bin:$PATH"
 
 EXPOSE 8002
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -fsS http://localhost:8002/docs >/dev/null || exit 1
 
 CMD sh -c 'alembic upgrade head && uvicorn src.cli.fastapi_app:app \
     --host 0.0.0.0 --port 8002 \
-    --reload --reload-dir /app/apps/document-service/src --reload-dir /app/packages'
+    --reload --reload-dir /app/apps/document-gateway/src --reload-dir /app/packages'
     
