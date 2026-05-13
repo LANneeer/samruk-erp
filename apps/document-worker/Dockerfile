@@ -67,5 +67,8 @@ RUN useradd -ms /bin/bash app_user
 RUN chown -R app_user:app_user /app
 USER app_user
 
-CMD alembic upgrade head && \
-    celery -A src.celery_app:celery_app worker --loglevel=info
+# without [] and "exec" the container stop will be stopping for 10 seconds
+CMD [ "/bin/sh" , "-c", "\
+    alembic upgrade head && \
+    exec celery -A src.celery_app:celery_app worker --loglevel=info \
+"]

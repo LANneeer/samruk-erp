@@ -67,10 +67,13 @@ RUN useradd -ms /bin/bash app_user
 RUN chown -R app_user:app_user /app
 USER app_user
 
-CMD alembic upgrade head && \
-    uvicorn src.fastapi_app:app \
+# without [] and "exec" the container stop will be stopping for 10 seconds
+CMD [ "/bin/sh" , "-c", "\
+    alembic upgrade head && \
+    exec uvicorn src.fastapi_app:app \
         --host 0.0.0.0 \
         --port 8001 \
         --reload \
         --reload-dir /app/apps/user-service/src \
-        --reload-dir /app/packages
+        --reload-dir /app/packages \
+"]

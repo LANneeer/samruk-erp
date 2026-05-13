@@ -63,9 +63,12 @@ RUN useradd -ms /bin/bash app_user
 RUN chown -R app_user:app_user /app
 USER app_user
 
-CMD uvicorn src.fastapi_app:app \
+# without [] and "exec" the container stop will be stopping for 10 seconds
+CMD [ "/bin/sh" , "-c", "\
+    exec uvicorn src.fastapi_app:app \
         --host 0.0.0.0 \
         --port 8002 \
         --reload \
         --reload-dir /app/apps/document-gateway/src \
-        --reload-dir /app/packages
+        --reload-dir /app/packages \
+"]
