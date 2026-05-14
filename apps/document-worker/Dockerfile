@@ -70,5 +70,10 @@ USER app_user
 # without [] and "exec" the container stop will be stopping for 10 seconds
 CMD [ "/bin/sh" , "-c", "\
     alembic upgrade head && \
-    exec celery -A src.celery_app:celery_app worker --loglevel=info \
+    exec watchmedo auto-restart \
+        --patterns='*.py' \
+        --recursive \
+        --directory=/app/apps/document-worker/src \
+        --directory=/app/packages \
+        -- celery -A src.celery_app:celery_app worker --loglevel=info \
 "]
