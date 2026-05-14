@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from patterns.repository import AbstractRepository
 from patterns.unit_of_work import AsyncAbstractUnitOfWork
 from src.infrastructure.db_async import AsyncSessionLocal
-from repository.async_document_repository import SqlAlchemyAsyncDocumentRepository
+from src.repository.async_document_repository import SqlAlchemyAsyncDocumentRepository
 from utils.domains.common.exceptions import DatabaseConflict
 
 

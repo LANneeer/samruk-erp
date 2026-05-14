@@ -63,10 +63,6 @@ EXPOSE 8003
 HEALTHCHECK --interval=60s --timeout=3s --retries=3 \
     CMD curl -fsS http://localhost:8003/docs >/dev/null || exit 1
 
-RUN useradd -ms /bin/bash app_user
-RUN chown -R app_user:app_user /app
-USER app_user
-
 # without [] and "exec" the container stop will be stopping for 10 seconds
 CMD [ "/bin/sh" , "-c", "\
     alembic upgrade head && \

@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from patterns.repository import AbstractRepository
-from src.database import DocumentORM, ChunkORM
+from src.domain.orm import DocumentORM, ChunkORM
 from src.config import settings
 from src.domain.model import Document, Chunk
 from datetime import datetime, timezone

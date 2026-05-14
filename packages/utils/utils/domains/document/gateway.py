@@ -1,8 +1,11 @@
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
+#
+# These classes are converted to json automatically by fastapi
+#
 
-class DocumentReadDTO(BaseModel):
+class DocumentDTO(BaseModel):
     id: UUID
     title: str
     file_name: str
@@ -10,12 +13,13 @@ class DocumentReadDTO(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-class DocumentUpdateDTO(BaseModel):
+class UpdateDocumentDTO(BaseModel):
     title: str | None = None
 
-#TODO: where are we sending full chunk embeddig??? stop it, it is too large
+class DocumentUpdatedDTO(BaseModel):
+    updated_at: datetime
+
 class ChunkDTO(BaseModel):
     id: UUID
     document_id: UUID
     content: str
-    embedding: list[float]

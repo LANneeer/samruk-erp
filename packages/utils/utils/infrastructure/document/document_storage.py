@@ -1,18 +1,20 @@
-from fastapi import UploadFile
 from uuid import UUID
 from pathlib import Path
+from typing import IO
 import logging
-from src.config import settings
 
 logger = logging.getLogger("storage")
+_document_storage_dir = None
 
-def storage_init():
-    settings.DOCUMENT_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+def storage_init(document_storage_dir: Path):
+    global _document_storage_dir
+    _document_storage_dir = document_storage_dir
+    _document_storage_dir.mkdir(parents=True, exist_ok=True)
 
 def get_document_file_path(document_id: UUID) -> Path:
-    return settings.DOCUMENT_STORAGE_DIR / document_id.hex
+    return _document_storage_dir / str(document_id)
 
-async def save_document_file(upload_file: UploadFile, document_id: UUID) -> int:
+async def save_document_file(upload_file: IO[bytes], document_id: UUID) -> int:
     file_path = get_document_file_path(document_id)
     logger.info(f"Saving uploaded file to '{file_path}'")
     total_size = 0

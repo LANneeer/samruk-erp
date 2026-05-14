@@ -1,7 +1,7 @@
 from typing import Union, Protocol
+from pydantic import BaseModel
 
-
-class Message(Protocol):
+class Message(BaseModel):
     """
     Data type of message from queue
 

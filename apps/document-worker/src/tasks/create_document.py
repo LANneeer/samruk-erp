@@ -1,17 +1,22 @@
-from src.celery_app import celery_app
+from celery import shared_task
 import msgspec
 from utils.domains.document.commands import CreateDocument, DocumentCreated
 from utils.domains.common.exceptions import NotSupported
+from utils.infrastructure.document.document_storage import get_document_file_path
 from src.infrastructure.async_unit_of_work import AsyncUnitOfWork
 from src.domain.model import Document, Chunk
 from src.infrastructure.parsing import Sheet, create_chunks_from_sheets_async
 from src.infrastructure.embedding import MockEmbeddingGenerator #, OpenAIEmbeddingGenerator
 import pandas as pd
 from pathlib import Path
+from src.infrastructure.asyncio_loop import await_sync
 
-@celery_app.task(name="document-gateway.create_document")
-async def create_document(kwargs: dict):
-    cmd: CreateDocument = msgspec.json.decode(kwargs['dto'], type=CreateDocument)
+@shared_task(name="document-gateway.create_document")
+def create_document(dto_json: str):
+    cmd: CreateDocument = msgspec.json.decode(dto_json, type=CreateDocument)
+    return msgspec.json.encode(await_sync(create_document_async(cmd)))
+
+async def create_document_async(cmd: CreateDocument):
     async with AsyncUnitOfWork() as uow:
         # create document model in memory
         document = Document.create(title=cmd.title, file_name=cmd.file_name, author_id=cmd.author_id)
@@ -26,7 +31,7 @@ async def create_document(kwargs: dict):
         return DocumentCreated(
             document_id=cmd.document_id,
             created_at=document.created_at,
-        )
+        ).model_dump()
 
 
 async def parse_document(document: Document):

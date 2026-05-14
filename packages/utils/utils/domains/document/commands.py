@@ -3,6 +3,9 @@ from patterns.message import Command, Event
 from uuid import UUID
 from typing import Any
 from datetime import datetime
+#
+# DTO's for inter-service communication
+#
 
 #############################################################################
 #                                   COMMANDS                                #
@@ -25,9 +28,23 @@ class UpdateDocument(Command):
 class DeleteDocument(Command):
     document_id: UUID
 
+@dataclass(frozen=True, slots=True)
+class GetDocument(Command):
+    document_id: UUID
+
+@dataclass(frozen=True, slots=True)
+class ListDocuments(Command):
+    skip: int
+    limit: int
+
+@dataclass(frozen=True, slots=True)
+class ChunkVectorSearch(Command):
+    document_id: UUID
+    query: str
+    limit: int
 
 #############################################################################
-#                                    EVENTS                                 #
+#                                    RESPONSE                                 #
 #############################################################################
 
 @dataclass(frozen=True, slots=True)
