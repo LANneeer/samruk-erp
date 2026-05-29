@@ -24,6 +24,15 @@ x-conf-environment: &conf-environment
   IDEMPOTENCY_TTL_SEC: "${IDEMPOTENCY_TTL_SEC}"
   IDEMPOTENCY_MAX_BODY_BYTES: "${IDEMPOTENCY_MAX_BODY_BYTES}"
 
+  DOCUMENT_STORAGE_DIR: "${DOCUMENT_STORAGE_DIR}"
+  DOCUMENT_CHUNK_ROWS: "${DOCUMENT_CHUNK_ROWS}"
+  EMBEDDING_SIZE: "${EMBEDDING_SIZE}"
+  DOCUMENT_HNSW_EF_SEARCH: "${DOCUMENT_HNSW_EF_SEARCH}"
+  OPENAI_API_KEY: "${OPENAI_API_KEY}"
+  OPENAI_EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL}"
+
+  NEXT_PUBLIC_DOCUMENTS_API_URL: "${NEXT_PUBLIC_DOCUMENTS_API_URL}"
+
 services:
   user-service:
     build:
@@ -43,9 +52,7 @@ services:
     build:
       context: .
       dockerfile: apps/document-gateway/Dockerfile
-    environment:
-      <<: *conf-environment
-      DOCUMENT_STORAGE_DIR: "${DOCUMENT_STORAGE_DIR}"
+    environment: *conf-environment
     ports:
       - "8002:8002"
     volumes:
@@ -59,8 +66,7 @@ services:
     build:
       context: .
       dockerfile: apps/document-worker/Dockerfile
-    environment:
-      <<: *conf-environment
+    environment: *conf-environment
     ports:
       - "8003:8003"
     volumes:
@@ -70,6 +76,15 @@ services:
     depends_on:
       - redis
       - postgres
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    environment: *conf-environment
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
 
   postgres:
     image: pgvector/pgvector:pg18
