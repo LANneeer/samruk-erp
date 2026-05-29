@@ -1,5 +1,4 @@
-# Diploma Project: Service-Oriented ERP Platform Prototype
-#TODO: update readme
+# Samruk Kazyna ERP prototype
 
 ## Abstract
 
@@ -7,7 +6,7 @@ This repository contains a diploma-scale prototype of a service-oriented enterpr
 The system is organized as a set of independent backend services supported by shared internal libraries, a relational database, a cache layer, and an observability foundation. The current implementation focuses on two bounded domains:
 
 - **User Service** — lifecycle management of user accounts and roles.
-- **Document Gateway** — upload, storage, parsing, chunking, and vector-oriented retrieval of tabular documents.
+- **Document Service** — upload, storage, parsing, chunking, and vector-oriented retrieval of tabular documents.
 
 From an architectural perspective, the project demonstrates the practical application of:
 
@@ -182,10 +181,6 @@ The service also models `Chunk` entities that store:
 ### Vector-search implementation
 
 The service stores embeddings in PostgreSQL using **pgvector** and defines an HNSW index for chunk similarity search. This creates a practical basis for retrieval-augmented workflows over tabular business documents.
-
-### Current implementation note
-
-The codebase already contains an `OpenAIEmbeddingGenerator`, but the active execution path currently uses `MockEmbeddingGenerator`. In other words, the vector pipeline and schema are implemented, while production embedding-provider integration remains a future extension.
 
 ---
 
@@ -516,7 +511,7 @@ These features make the project suitable as both a diploma artifact and a practi
 
 The current state of the project also includes known limitations:
 
-- document embeddings use a mock generator in the active flow;
+- document embeddings use OpenAI API in the active flow;
 - document-gateway automated tests are not yet present at the same level as user-service tests;
 - the Compose stack does not yet start the full observability platform;
 - some event-driven integrations are scaffolded through protocols and hooks, but external brokers/providers are still future work;

@@ -5,8 +5,9 @@ from utils.domains.common.exceptions import NotFound
 from utils.domains.document.gateway import ChunkDTO
 from src.infrastructure.async_unit_of_work import AsyncUnitOfWork
 from src.domain.model import Document, Chunk
-from src.infrastructure.embedding import MockEmbeddingGenerator #, OpenAIEmbeddingGenerator
+from src.infrastructure.embedding import OpenAIEmbeddingGenerator
 from src.infrastructure.asyncio_loop import await_sync
+from src.config import settings
 
 @shared_task(name="document-gateway.chunk_vector_search")
 def chunk_vector_search(dto_json: str):
@@ -19,8 +20,7 @@ async def chunk_vector_search_async(cmd: ChunkVectorSearch):
         if not doc:
             raise NotFound("Document not found")
         
-        # TODO: replace with real embedding generator
-        embedder = MockEmbeddingGenerator()
+        embedder = OpenAIEmbeddingGenerator(settings.OPENAI_API_KEY, settings.OPENAI_EMBEDDING_MODEL)
         query_embedding = await embedder.embed(cmd.query)
         chunks: list[Chunk] = await uow.documents.vector_search(cmd.document_id, query_embedding=query_embedding, limit=cmd.limit)
         if not chunks or len(chunks) == 0:

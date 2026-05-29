@@ -126,10 +126,8 @@ async def create_document(
                 file_name=upload_file.filename,
             )
         )
-        #TODO: rewrite this route to return document_id immediately and add polling route to get document status
-        task_result: DocumentCreated = celery_wait_task_result(task_id, DocumentCreated)
 
-        document_storage.make_temp_document_file_persistent(temp_file_path, task_result.id)
+        task_result: DocumentCreated = celery_wait_task_result(task_id, DocumentCreated)
 
         return DocumentDTO(
             id=task_result.document_id,

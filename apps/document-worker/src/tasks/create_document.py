@@ -6,10 +6,11 @@ from utils.infrastructure.document.document_storage import get_document_file_pat
 from src.infrastructure.async_unit_of_work import AsyncUnitOfWork
 from src.domain.model import Document, Chunk
 from src.infrastructure.parsing import Sheet, create_chunks_from_sheets_async
-from src.infrastructure.embedding import MockEmbeddingGenerator #, OpenAIEmbeddingGenerator
+from src.infrastructure.embedding import OpenAIEmbeddingGenerator
 import pandas as pd
 from pathlib import Path
 from src.infrastructure.asyncio_loop import await_sync
+from src.config import settings
 
 @shared_task(name="document-gateway.create_document")
 def create_document(dto_json: str):
@@ -59,12 +60,10 @@ async def parse_document(document: Document):
 
 
 async def generate_embeddings(uow: AsyncUnitOfWork, document: Document, str_chunks: list[str]):
-    # TODO: get openai token to use real embedding generator
-    # embedding_generator = OpenAIEmbeddingGenerator()
-    embedding_generator = MockEmbeddingGenerator()
-
+    embedder = OpenAIEmbeddingGenerator(settings.OPENAI_API_KEY, settings.OPENAI_EMBEDDING_MODEL)
+    
     for chunk_content in str_chunks:
-        embedding = await embedding_generator.embed(chunk_content)
+        embedding = await embedder.embed(chunk_content)
         chunk = Chunk(document_id=document.id, content=chunk_content, embedding=embedding)
         uow.documents.add_chunk(chunk)
 

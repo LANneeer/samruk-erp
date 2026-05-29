@@ -30,4 +30,7 @@ class Settings(BaseSettings):
     EMBEDDING_SIZE: int = 1536
     DOCUMENT_HNSW_EF_SEARCH: int = 200
 
+    OPENAI_API_KEY: str # required
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+
 settings = Settings()
