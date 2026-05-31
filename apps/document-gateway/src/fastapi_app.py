@@ -112,18 +112,18 @@ def metrics():
 async def create_document(
     title: str,
     author_id: UUID,
-    upload_file: UploadFile = File(...),
+    file: UploadFile = File(...),
 ):
     document_id = uuid4()
-    temp_file_path = await document_storage.save_document_file(upload_file, document_id)
-    # delete file if error
+    await document_storage.save_document_file(file, document_id)
+    # delete file if catched error
     try:
         task_id = celery_send_task("document-gateway.create_document", 
             CreateDocument(
                 document_id=document_id,
                 author_id=author_id,
                 title=title,
-                file_name=upload_file.filename,
+                file_name=file.filename,
             )
         )
 
@@ -131,9 +131,9 @@ async def create_document(
 
         return DocumentDTO(
             id=task_result.document_id,
-            title=task_result.title,
-            file_name=task_result.file_name,
-            author_id=task_result.author_id,
+            title=title,
+            file_name=file.filename,
+            author_id=author_id,
             created_at=task_result.created_at,
             updated_at=task_result.created_at,
         )
@@ -225,7 +225,7 @@ async def delete_document(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/documents/{document_id}/chunks/search", response_model=list[ChunkDTO])
+@app.get("/documents/{document_id}/search_chunks", response_model=list[ChunkDTO])
 async def chunk_vector_search(
     document_id: UUID,
     query: str,

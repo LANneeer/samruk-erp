@@ -38,11 +38,13 @@ class Document(Aggregate):
     def create(
         cls,
         *,
+        document_id: UUID,
         title: str,
         file_name: str,
         author_id: UUID,
     ):
         document = cls(
+            document_id=document_id,
             title=title,
             file_name=file_name,
             author_id=author_id,

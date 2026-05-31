@@ -14,9 +14,9 @@ def storage_init(document_storage_dir: Path):
 def get_document_file_path(document_id: UUID) -> Path:
     return _document_storage_dir / str(document_id)
 
-async def save_document_file(upload_file: IO[bytes], document_id: UUID) -> int:
+async def save_document_file(upload_file: IO[bytes], document_id: UUID) -> None:
     file_path = get_document_file_path(document_id)
-    logger.info(f"Saving uploaded file to '{file_path}'")
+    logger.info(f"Saving upload file to '{file_path}'")
     total_size = 0
     if file_path.exists():
         raise FileExistsError(f"trying save uploaded file, but file already exists at '{file_path}'")
@@ -24,7 +24,7 @@ async def save_document_file(upload_file: IO[bytes], document_id: UUID) -> int:
         while chunk := await upload_file.read(1024 * 1024):
             f.write(chunk)
             total_size += len(chunk)
-    return total_size
+    logger.info(f"Size of saved file '{file_path}' is {total_size} bytes")
 
 def delete_document_file(document_id: UUID) -> None:
     file_path = get_document_file_path(document_id)

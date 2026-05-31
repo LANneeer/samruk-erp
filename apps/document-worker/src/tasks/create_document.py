@@ -11,6 +11,8 @@ import pandas as pd
 from pathlib import Path
 from src.infrastructure.asyncio_loop import await_sync
 from src.config import settings
+import logging
+log = logging.getLogger("create_document")
 
 @shared_task(name="document-gateway.create_document")
 def create_document(dto_json: str):
@@ -20,7 +22,7 @@ def create_document(dto_json: str):
 async def create_document_async(cmd: CreateDocument):
     async with AsyncUnitOfWork() as uow:
         # create document model in memory
-        document = Document.create(title=cmd.title, file_name=cmd.file_name, author_id=cmd.author_id)
+        document = Document.create(document_id=cmd.document_id, title=cmd.title, file_name=cmd.file_name, author_id=cmd.author_id)
         uow.documents.add(document)
         # recognize document type and split it into chunks
         str_chunks = await parse_document(document)
@@ -39,16 +41,19 @@ async def parse_document(document: Document):
     original_file_name = Path(document.file_name)
     ext = original_file_name.suffix.lower()
     file_path = get_document_file_path(document.id)
+    log.info(f"parsing document file '{file_path}'")
 
     sheets: list[Sheet] = []
     # parse different file types as Sheet objects
     if ext == ".csv":
         df: pd.DataFrame = pd.read_csv(file_path)
-        sheets.append(Sheet(name=original_file_name.stem, columns=df.columns.tolist(), df=df))
+        columns: list[str] = df.columns.astype(str).tolist()
+        sheets.append(Sheet(name=original_file_name.stem, columns=columns, df=df))
     elif ext in [".xls", ".xlsx", ".xlsm", ".xlsb", ".odf", ".ods", ".odt"]:
         all_sheets: dict[str | int, pd.DataFrame] = pd.read_excel(file_path, sheet_name=None)
         for sheet_name, df in all_sheets.items():
-            sheets.append(Sheet(name=str(sheet_name), columns=df.columns.tolist(), df=df))
+            columns: list[str] = df.columns.astype(str).tolist()
+            sheets.append(Sheet(name=str(sheet_name), columns=columns, df=df))
     else:
         raise NotSupported(f"Unsupported file type: {ext}")
     
