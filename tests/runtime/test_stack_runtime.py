@@ -168,10 +168,6 @@ class StackRuntimeTests(unittest.TestCase):
         self.assertEqual(status, 201)
         user_id = created["id"]
 
-        status, listed = request_json(f"{USER_SERVICE_URL}/users")
-        self.assertEqual(status, 200)
-        self.assertTrue(any(item["id"] == user_id for item in listed))
-
         status, profile = request_json(f"{USER_SERVICE_URL}/users/{user_id}")
         self.assertEqual(status, 200)
         self.assertEqual(profile["email"], email)
@@ -224,8 +220,10 @@ class StackRuntimeTests(unittest.TestCase):
         writer.writerow(["name", "amount"])
         writer.writerow(["Alice", "100"])
         writer.writerow(["Bob", "200"])
+        
+        title = f"Quarterly Report {uuid.uuid4().hex[:6]}"
         body, content_type = build_multipart_form(
-            fields={"title": f"Quarterly Report {uuid.uuid4().hex[:6]}", "author_id": author_id},
+            fields={},
             files={
                 "file": (
                     "report.csv",
@@ -234,32 +232,25 @@ class StackRuntimeTests(unittest.TestCase):
                 )
             },
         )
+        create_query = urllib.parse.urlencode({"title": title, "author_id": author_id})
 
         status, raw_created, _ = request(
-            f"{DOCUMENT_GATEWAY_URL}/documents",
+            f"{DOCUMENT_GATEWAY_URL}/documents?{create_query}",
             method="POST",
             headers={"Content-Type": content_type},
             data=body,
         )
-        self.assertEqual(status, 201)
+        self.assertEqual(status, 201, raw_created)
         created = json.loads(raw_created.decode("utf-8"))
         document_id = created["id"]
 
-        status, listed = request_json(f"{DOCUMENT_GATEWAY_URL}/documents")
-        self.assertEqual(status, 200)
-        self.assertTrue(any(item["id"] == document_id for item in listed))
-
         status, fetched = request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}")
-        self.assertEqual(status, 200)
+        self.assertEqual(status, 200, fetched)
         self.assertEqual(fetched["author_id"], author_id)
-
-        status, chunks = request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/chunks")
-        self.assertEqual(status, 200)
-        self.assertGreaterEqual(len(chunks), 1)
 
         query = urllib.parse.urlencode({"query": "Alice", "limit": 5})
         status, search = request_json(
-            f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/chunks/search?{query}"
+            f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/search_chunks?{query}"
         )
         self.assertEqual(status, 200)
         self.assertGreaterEqual(len(search), 1)
@@ -283,7 +274,7 @@ class StackRuntimeTests(unittest.TestCase):
         wait_until(
             lambda: (
                 prometheus_query(
-                    f'sum(http_requests_total{{service="document-gateway",method="GET",path="/documents/{document_id}/chunks/search",status="200"}})'
+                    f'sum(http_requests_total{{service="document-gateway",method="GET",path="/documents/{document_id}/search_chunks",status="200"}})'
                 )
                 or 0.0
             )

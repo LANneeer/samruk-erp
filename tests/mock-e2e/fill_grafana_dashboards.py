@@ -187,11 +187,10 @@ def seed_document_gateway(iteration: int) -> None:
         method="PATCH",
         payload={"title": f"Updated Seed Report {iteration}"},
     )
-    request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/chunks")
 
     for query_text in ("Alice", "Bob", f"iteration {iteration}"):
         query = urllib.parse.urlencode({"query": query_text, "limit": 5})
-        request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/chunks/search?{query}")
+        request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/search_chunks?{query}")
 
     request(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/download")
     request(f"{DOCUMENT_GATEWAY_URL}/metrics")
