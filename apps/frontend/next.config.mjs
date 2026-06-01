@@ -2,10 +2,15 @@
 const nextConfig = {
   output: 'standalone',
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     unoptimized: true,
+  },
+  productionBrowserSourceMaps: true,
+  experimental: {
+    serverSourceMaps: true,
+    serverMinification: false,
   },
 }
 

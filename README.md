@@ -485,8 +485,7 @@ Representative endpoints:
 - `GET /documents/{document_id}/download`
 - `PATCH /documents/{document_id}`
 - `DELETE /documents/{document_id}`
-- `GET /documents/{document_id}/chunks`
-- `GET /documents/{document_id}/chunks/search`
+- `GET /documents/{document_id}/search_chunks`
 - `GET /metrics`
 
 ---

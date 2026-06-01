@@ -23,7 +23,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { FileSpreadsheet, Files, Upload, LogOut } from 'lucide-react'
-import { ChatPanel } from '@/components/ai/chat-panel'
 
 const navItems = [
   { title: 'Reports', href: '/reports', icon: Files },
@@ -122,7 +121,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </SidebarInset>
-      <ChatPanel />
     </SidebarProvider>
   )
 }

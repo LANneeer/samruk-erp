@@ -103,22 +103,6 @@ export async function downloadDocument(documentId: string): Promise<Blob> {
   return res.blob()
 }
 
-// Get document chunks
-export async function getDocumentChunks(
-  documentId: string,
-  skip = 0,
-  limit = 10
-): Promise<DocumentChunk[]> {
-  const res = await fetch(
-    `${API_BASE_URL}/documents/${documentId}/chunks?skip=${skip}&limit=${limit}`
-  )
-  
-  if (!res.ok) {
-    throw new Error('Failed to fetch document chunks')
-  }
-  return res.json()
-}
-
 // Vector search within a document
 export async function searchDocumentChunks(
   documentId: string,
@@ -126,7 +110,7 @@ export async function searchDocumentChunks(
   limit = 10
 ): Promise<DocumentChunk[]> {
   const res = await fetch(
-    `${API_BASE_URL}/documents/${documentId}/chunks/search?query=${encodeURIComponent(query)}&limit=${limit}`
+    `${API_BASE_URL}/documents/${documentId}/search_chunks?query=${encodeURIComponent(query)}&limit=${limit}`
   )
   
   if (!res.ok) {

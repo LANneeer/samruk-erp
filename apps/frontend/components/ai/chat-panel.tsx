@@ -10,8 +10,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Bot, X, Send, Minimize2, Maximize2, Sparkles, User } from 'lucide-react'
 
 interface ChatPanelProps {
-  documentId?: string
-  documentTitle?: string
+  documentId: string
+  documentTitle: string
 }
 
 export function ChatPanel({ documentId, documentTitle }: ChatPanelProps) {

@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { ArrowLeft, Calendar, FileText, Trash2, Download, User } from 'lucide-react'
+import { ChatPanel } from '@/components/ai/chat-panel'
 
 export default function ReportDetailPage({
   params,
@@ -208,6 +209,12 @@ export default function ReportDetailPage({
         isLoading={fileLoading}
         error={fileError}
         onDownload={handleDownload}
+      />
+
+      {/* AI Assistant */}
+      <ChatPanel 
+        documentId={document.id} 
+        documentTitle={document.title}
       />
     </div>
   )

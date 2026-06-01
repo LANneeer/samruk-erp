@@ -31,7 +31,6 @@ COPY .env ./.env
 
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
 
 # Build the application
 RUN pnpm build
@@ -40,7 +39,6 @@ RUN pnpm build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user for security
@@ -62,4 +60,4 @@ ENV PORT=3002
 ENV HOSTNAME="0.0.0.0"
 
 # Start the application
-CMD ["node", "server.js"]
+CMD node --enable-source-maps server.js

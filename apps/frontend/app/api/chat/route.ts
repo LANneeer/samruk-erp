@@ -4,36 +4,41 @@ import {
   streamText,
   UIMessage,
 } from 'ai'
+import { openai } from '@ai-sdk/openai';
 
 export const maxDuration = 30
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_DOCUMENTS_API_URL || 'Error: undefined NEXT_PUBLIC_DOCUMENTS_API_URL'
+
+if(!process.env.NEXT_PUBLIC_DOCUMENTS_API_URL)
+    throw new Error('Error: undefined NEXT_PUBLIC_DOCUMENTS_API_URL')
+const DOCUMENTS_API_URL = process.env.NEXT_PUBLIC_DOCUMENTS_API_URL 
+
+if(!process.env.OPENAI_CHAT_MODEL)
+    throw new Error("Error: undefined OPENAI_CHAT_MODEL")
+const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL
+
+if(!process.env.OPENAI_API_KEY)
+    throw new Error("Error: undefined OPENAI_API_KEY")
 
 // Helper to search document chunks for context
 async function searchDocumentContext(documentId: string, query: string): Promise<string> {
-  if (!API_BASE_URL || !documentId) return ''
-  
-  try {
-    const res = await fetch(
-      `${API_BASE_URL}/documents/${documentId}/chunks/search?query=${encodeURIComponent(query)}&limit=5`
-    )
-    
-    if (!res.ok) return ''
-    
-    const chunks = await res.json()
-    if (!chunks || chunks.length === 0) return ''
-    
-    return chunks.map((chunk: { content: string }) => chunk.content).join('\n\n---\n\n')
-  } catch (err) {
-    console.error('Failed to search document:', err)
-    return ''
-  }
+  const res = await fetch(
+    `${DOCUMENTS_API_URL}/documents/${documentId}/search_chunks?query=${encodeURIComponent(query)}&limit=5`
+  )
+
+  if (!res.ok)
+    throw new Error(`Failed search_chunks in document '${documentId}'`)
+
+  const chunks = await res.json()
+  if (!chunks || chunks.length === 0) return ''
+
+  return chunks.map((chunk: { content: string }) => chunk.content).join('\n\n---\n\n')
 }
 
 export async function POST(req: Request) {
   const { messages, documentId, documentTitle }: { 
     messages: UIMessage[]
-    documentId?: string
+    documentId: string
     documentTitle?: string 
   } = await req.json()
 
@@ -76,8 +81,9 @@ ${documentContext}
 
 If the user asks about specific data and no document context is available, suggest they open a specific report first.`
 
+    console.log(systemPrompt)
   const result = streamText({
-    model: 'openai/gpt-4o-mini',
+    model: openai(OPENAI_CHAT_MODEL),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
     abortSignal: req.signal,
