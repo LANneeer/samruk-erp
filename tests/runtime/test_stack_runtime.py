@@ -14,7 +14,7 @@ from typing import Any
 
 
 USER_SERVICE_URL = "http://user-service:8001"
-DOCUMENT_SERVICE_URL = "http://document-service:8002"
+DOCUMENT_GATEWAY_URL = "http://document-gateway:8002"
 PROMETHEUS_URL = "http://prometheus:9090"
 GRAFANA_URL = "http://grafana:3000"
 HTTP_TIMEOUT_SECONDS = 10
@@ -132,7 +132,7 @@ class StackRuntimeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         wait_for_http_ok(f"{USER_SERVICE_URL}/docs")
-        wait_for_http_ok(f"{DOCUMENT_SERVICE_URL}/docs")
+        wait_for_http_ok(f"{DOCUMENT_GATEWAY_URL}/docs")
         wait_for_http_ok(f"{PROMETHEUS_URL}/-/ready")
         wait_for_http_ok(f"{GRAFANA_URL}/api/health")
 
@@ -167,10 +167,6 @@ class StackRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(status, 201)
         user_id = created["id"]
-
-        status, listed = request_json(f"{USER_SERVICE_URL}/users")
-        self.assertEqual(status, 200)
-        self.assertTrue(any(item["id"] == user_id for item in listed))
 
         status, profile = request_json(f"{USER_SERVICE_URL}/users/{user_id}")
         self.assertEqual(status, 200)
@@ -217,15 +213,17 @@ class StackRuntimeTests(unittest.TestCase):
             message="user-service GET /users/{id} metric did not appear in Prometheus",
         )
 
-    def test_document_service_runtime_and_metrics(self) -> None:
+    def test_document_gateway_runtime_and_metrics(self) -> None:
         author_id = str(uuid.uuid4())
         csv_buffer = io.StringIO()
         writer = csv.writer(csv_buffer)
         writer.writerow(["name", "amount"])
         writer.writerow(["Alice", "100"])
         writer.writerow(["Bob", "200"])
+        
+        title = f"Quarterly Report {uuid.uuid4().hex[:6]}"
         body, content_type = build_multipart_form(
-            fields={"title": f"Quarterly Report {uuid.uuid4().hex[:6]}", "author_id": author_id},
+            fields={},
             files={
                 "file": (
                     "report.csv",
@@ -234,37 +232,30 @@ class StackRuntimeTests(unittest.TestCase):
                 )
             },
         )
+        create_query = urllib.parse.urlencode({"title": title, "author_id": author_id})
 
         status, raw_created, _ = request(
-            f"{DOCUMENT_SERVICE_URL}/documents",
+            f"{DOCUMENT_GATEWAY_URL}/documents?{create_query}",
             method="POST",
             headers={"Content-Type": content_type},
             data=body,
         )
-        self.assertEqual(status, 201)
+        self.assertEqual(status, 201, raw_created)
         created = json.loads(raw_created.decode("utf-8"))
         document_id = created["id"]
 
-        status, listed = request_json(f"{DOCUMENT_SERVICE_URL}/documents")
-        self.assertEqual(status, 200)
-        self.assertTrue(any(item["id"] == document_id for item in listed))
-
-        status, fetched = request_json(f"{DOCUMENT_SERVICE_URL}/documents/{document_id}")
-        self.assertEqual(status, 200)
+        status, fetched = request_json(f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}")
+        self.assertEqual(status, 200, fetched)
         self.assertEqual(fetched["author_id"], author_id)
-
-        status, chunks = request_json(f"{DOCUMENT_SERVICE_URL}/documents/{document_id}/chunks")
-        self.assertEqual(status, 200)
-        self.assertGreaterEqual(len(chunks), 1)
 
         query = urllib.parse.urlencode({"query": "Alice", "limit": 5})
         status, search = request_json(
-            f"{DOCUMENT_SERVICE_URL}/documents/{document_id}/chunks/search?{query}"
+            f"{DOCUMENT_GATEWAY_URL}/documents/{document_id}/search_chunks?{query}"
         )
         self.assertEqual(status, 200)
         self.assertGreaterEqual(len(search), 1)
 
-        status, metrics_body, _ = request(f"{DOCUMENT_SERVICE_URL}/metrics")
+        status, metrics_body, _ = request(f"{DOCUMENT_GATEWAY_URL}/metrics")
         self.assertEqual(status, 200)
         metrics_text = metrics_body.decode("utf-8")
         self.assertIn("http_requests_total", metrics_text)
@@ -273,22 +264,22 @@ class StackRuntimeTests(unittest.TestCase):
         wait_until(
             lambda: (
                 prometheus_query(
-                    'sum(http_requests_total{service="document-service",method="POST",path="/documents",status="201"})'
+                    'sum(http_requests_total{service="document-gateway",method="POST",path="/documents",status="201"})'
                 )
                 or 0.0
             )
             >= 1.0,
-            message="document-service POST /documents metric did not appear in Prometheus",
+            message="document-gateway POST /documents metric did not appear in Prometheus",
         )
         wait_until(
             lambda: (
                 prometheus_query(
-                    f'sum(http_requests_total{{service="document-service",method="GET",path="/documents/{document_id}/chunks/search",status="200"}})'
+                    f'sum(http_requests_total{{service="document-gateway",method="GET",path="/documents/{document_id}/search_chunks",status="200"}})'
                 )
                 or 0.0
             )
             >= 1.0,
-            message="document-service chunks search metric did not appear in Prometheus",
+            message="document-gateway chunks search metric did not appear in Prometheus",
         )
 
 

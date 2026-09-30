@@ -7,4 +7,11 @@ WORKDIR /app
 
 COPY tests/runtime ./tests/runtime
 
-CMD ["sh", "-c", "sleep 15 && python -m unittest discover -s tests/runtime -p 'test_*.py' -v"]
+# without [] and "exec" the container stop will be stopping for 10 seconds
+CMD ["sh", "-c", "\
+    sleep 15 && \
+    exec python -m unittest discover \
+        -s tests/runtime \
+        -p 'test_*.py' \
+        -v \
+"]

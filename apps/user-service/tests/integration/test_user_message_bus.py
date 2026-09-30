@@ -1,11 +1,8 @@
 from __future__ import annotations
-
 import asyncio
-
 import pytest
-
 from src.bootstrap.async_settings import bootstrap_async
-from src.domains.common.exceptions import Conflict, DuplicateEmail
+from utils.domains.common.exceptions import Conflict, DuplicateEmail
 from src.dto.commands import RegisterUser, UpdateUserProfile
 
 

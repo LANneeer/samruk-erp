@@ -7,4 +7,8 @@ WORKDIR /app
 
 COPY tests/mock-e2e ./tests/mock-e2e
 
-CMD ["sh", "-c", "sleep 15 && python tests/mock-e2e/fill_grafana_dashboards.py"]
+# without [] and "exec" the container stop will be stopping for 10 seconds
+CMD ["sh", "-c", "\
+    sleep 15 && \
+    exec python tests/mock-e2e/fill_grafana_dashboards.py \
+"]

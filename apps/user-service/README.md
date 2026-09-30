@@ -9,9 +9,10 @@
 3. Запустить:
 
 ```bash
+pyenv install 3.12
 poetry install
 poetry run alembic upgrade head 
-poetry run uvicorn src.cli.fastapi_app:app --reload --port 8001
+poetry run uvicorn src.fastapi_app:app --reload --port 8001
 ```
 
 API доступен по адресу: <http://localhost:8001>

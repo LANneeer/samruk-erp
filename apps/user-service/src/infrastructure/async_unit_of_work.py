@@ -8,6 +8,10 @@ from src.repository.sqlalchemy_async import SqlAlchemyAsyncUserRepository
 from utils.domains.common.exceptions import DatabaseConflict
 
 
+async def get_uow():
+    async with AsyncUnitOfWork() as uow:
+        yield uow
+
 class AsyncUnitOfWork(AsyncAbstractUnitOfWork):
     def __init__(self, session_factory=AsyncSessionLocal) -> None:
         super().__init__()

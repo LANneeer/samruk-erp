@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 import pytest
-
 from src.domains.users.model import Role, User
 from src.dto.commands import (
     UserActivated,

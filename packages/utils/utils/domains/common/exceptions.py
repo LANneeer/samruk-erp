@@ -1,40 +1,39 @@
-from fastapi import status
 class DomainError(Exception):
     code = "domain_error"
-    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    status_code = 500 #INTERNAL_SERVER_ERROR
 
 class DuplicateEmail(DomainError):
     code = "duplicate_email"
-    status_code = status.HTTP_409_CONFLICT
+    status_code = 409 #CONFLICT
 
 class DuplicateUsername(DomainError):
     code = "duplicate_username"
-    status_code = status.HTTP_409_CONFLICT
+    status_code = 409 #CONFLICT
 
 class Conflict(DomainError):
     code = "conflict"
-    status_code = status.HTTP_409_CONFLICT
+    status_code = 409 #CONFLICT
 
 class DatabaseConflict(DomainError):
     code = "db_conflict"
-    status_code = status.HTTP_409_CONFLICT
+    status_code = 409 #CONFLICT
 
 class NotFound(DomainError):
     code = "not_found"
-    status_code = status.HTTP_404_NOT_FOUND
+    status_code = 404 #NOT_FOUND
 
 class ValidationFailed(DomainError):
     code = "validation_failed"
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = 422 #UNPROCESSABLE_ENTITY
 
 class Unauthorized(DomainError):
     code = "unauthorized"
-    status_code = status.HTTP_401_UNAUTHORIZED
+    status_code = 401 #UNAUTHORIZED
 
 class Forbidden(DomainError):
     code = "forbidden"
-    status_code = status.HTTP_403_FORBIDDEN
+    status_code = 403 #FORBIDDEN
 
 class NotSupported(DomainError):
     code = "not_supported"
-    status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+    status_code = 415 #UNSUPPORTED_MEDIA_TYPE
